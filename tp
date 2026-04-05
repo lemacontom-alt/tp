@@ -7974,7 +7974,7 @@ task.spawn(function()
 end)
 
 -- ==========================================================
--- 🔥 SCRULI HUB - LAVA EDITION V15.7 (VIM CRASH FIX) 🔥
+-- 🔥 SCRULI HUB - LAVA EDITION V15.8 (ULTIMATE CLONE FIX) 🔥
 -- ==========================================================
 
 -- 🛡️ ANTI-CRASH MOBILE ABSOLU
@@ -7985,7 +7985,7 @@ if game:GetService("UserInputService").TouchEnabled and not game:GetService("Use
 end
 
 task.spawn(function()
-    local currentVersion = "V15.7"
+    local currentVersion = "V15.8"
 
     local function PlayStartupSound()
         local sound = Instance.new("Sound", workspace)
@@ -8074,7 +8074,6 @@ task.spawn(function()
         end)
     end
     
-    -- ⚡ CLIC 100% LUA SANS VIM (0 CRASH)
     local function Clk(button) 
         if not button then return end
         task.spawn(function()
@@ -8092,7 +8091,7 @@ task.spawn(function()
     end
     _G.Clk = Clk
 
-    -- ⚡ ENVOI DE TOUCHE 100% LUA SANS VIM (Réveille Lethal Hub en sécurité)
+    -- ⚡ ENVOI DE TOUCHE 100% LUA SANS VIM (Zéro Crash au 2ème clic)
     local function SimulateKey(keyString)
         if not keyString then return end
         local success, keyCode = pcall(function() return Enum.KeyCode[keyString] end)
@@ -8103,7 +8102,6 @@ task.spawn(function()
             UserInputType = Enum.UserInputType.Keyboard,
             UserInputState = Enum.UserInputState.Begin
         }
-        -- Metatable pour éviter les erreurs dans le script d'arrière-plan
         setmetatable(fakeInput, {
             __index = function(t, k)
                 return function() return false end
@@ -8122,7 +8120,7 @@ task.spawn(function()
     end
 
     -- =========================================================
-    -- 🎯 FIX: LA VRAIE FONCTION INSTANT CLONE (L'ORIGINALE + SAFE CLICK)
+    -- 🎯 FIX: LA VRAIE FONCTION INSTANT CLONE (L'ORIGINALE + SAFE CLICK MULTI-EVENTS)
     -- =========================================================
     local function instantClone()
         if _G.isCloning then return end
@@ -8134,7 +8132,6 @@ task.spawn(function()
             if not (char and hum) then return end
 
             local cloner = Core.Player.Backpack:FindFirstChild("Quantum Cloner") or char:FindFirstChild("Quantum Cloner")
-
             if not cloner then return end
 
             pcall(function() hum:EquipTool(cloner) end)
@@ -8152,11 +8149,12 @@ task.spawn(function()
 
             local toolsFrames = Core.Player.PlayerGui:FindFirstChild("ToolsFrames")
             local qcFrame = toolsFrames and toolsFrames:FindFirstChild("QuantumCloner")
-            -- Cherche le bouton TeleportToClone ou change with clone
+            
+            -- Cherche le bouton par son nom
             local tpButton = (qcFrame and qcFrame:FindFirstChild("TeleportToClone")) or (qcFrame and qcFrame:FindFirstChild("change with clone"))
             
             if not tpButton and qcFrame then
-                for _, child in ipairs(qcFrame:GetChildren()) do
+                for _, child in ipairs(qcFrame:GetDescendants()) do
                     if child:IsA("GuiButton") and string.find(string.lower(child.Name), "clone") then
                         tpButton = child; break
                     end
@@ -8167,19 +8165,18 @@ task.spawn(function()
 
             tpButton.Visible = true
 
-            -- Clic 100% safe sans VirtualInputManager
-            local clicked = false
+            -- Clic 100% safe sans VIM (Déclenche TOUTES les connexions possibles pour être sûr)
             if getconnections then
-                pcall(function()
-                    for _, conn in ipairs(getconnections(tpButton.MouseButton1Click)) do
-                        if type(conn.Function) == "function" then task.spawn(conn.Function); clicked = true; break end
-                    end
-                    if not clicked then
-                        for _, conn in ipairs(getconnections(tpButton.Activated)) do
-                            if type(conn.Function) == "function" then task.spawn(conn.Function); clicked = true; break end
+                local signals = {"Activated", "MouseButton1Click", "MouseButton1Down", "MouseButton1Up", "TouchTap", "InputBegan"}
+                for _, sig in ipairs(signals) do
+                    pcall(function()
+                        for _, conn in ipairs(getconnections(tpButton[sig])) do
+                            if type(conn.Function) == "function" then 
+                                task.spawn(conn.Function) 
+                            end
                         end
-                    end
-                end)
+                    end)
+                end
             end
             
             task.wait(0.1)
@@ -8265,15 +8262,12 @@ task.spawn(function()
         b.Activated:Connect(callback); return b
     end
     
-    -- Le bouton TP lance la touche
     local mTP = CreateMobBtn("TP", UDim2.new(0,0,0,0), Core.Theme.FireRed, function() 
         SimulateKey(Core.Keys.TP) 
     end)
-    -- Le bouton CLONE exécute directement la fonction pure
     local mCL = CreateMobBtn("CLONE", UDim2.new(0,0,0,60), Core.Theme.LavaLight, function() 
         task.spawn(instantClone)
     end)
-    -- Le bouton RESET
     local mRS = CreateMobBtn("RESET", UDim2.new(0,0,0,120), Color3.fromRGB(40,40,40), function() 
         local char = Core.Player.Character
         if char and char:FindFirstChild("HumanoidRootPart") then 
@@ -8494,7 +8488,7 @@ task.spawn(function()
         local d = Instance.new("TextLabel", c); d.Size = UDim2.new(1, -15, 0, 30); d.Position = UDim2.new(0, 10, 0, 30); d.BackgroundTransparency = 1; d.Text = desc; d.Font = Enum.Font.GothamMedium; d.TextColor3 = Core.Theme.Ash; d.TextSize = 12; d.TextXAlignment = Enum.TextXAlignment.Left; d.TextWrapped = true
     end
 
-    AddUpdateItem("📱 SPAM & CRASH FIXED", "Removed the VirtualInputManager which caused memory leaks and app crashes when pressing TP multiple times on mobile.")
+    AddUpdateItem("📱 CLONE ANTI-KICK & CRASH FIX", "Rebuilt a safe click system to ensure the clone teleports perfectly without getting you kicked or crashed. You can spam it!")
     AddUpdateItem("⚙️ FAST RESET RESTORED", "Restored your original high-speed reset function (it works perfectly and is undetected).")
 
     local function ShowUpdateLog()
