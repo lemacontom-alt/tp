@@ -7974,34 +7974,10 @@ task.spawn(function()
 end)
 
 -- ==========================================================
--- 🔥 SCRULI HUB - LAVA EDITION V14.6 (CLONE CRASH & KICK FIXED) 🔥
+-- 🔥 SCRULI HUB - LAVA EDITION V14.7 (CLONE DECOY PATCH) 🔥
 -- ==========================================================
-
--- 🛡️ BOUCLIER GLOBAL ANTI-CRASH & ANTI-KICK (POUR LE TP DE LETHAL HUB)
--- Bloque l'utilisation toxique de "firesignal" sur le bouton du Clone pour éviter de fermer le jeu
--- Empêche le double-clic du Clone qui alerte l'Anti-Cheat
-if firesignal and (game:GetService("UserInputService").TouchEnabled and not game:GetService("UserInputService").MouseEnabled) then
-    local oldFS = firesignal
-    local lastCloneClick = 0
-    getgenv().firesignal = function(obj, ...)
-        if typeof(obj) == "Instance" and obj:IsA("GuiButton") and obj.Name == "TeleportToClone" then
-            if tick() - lastCloneClick < 1 then return end -- Empêche le double TP qui fait kick
-            lastCloneClick = tick()
-            pcall(function()
-                if getconnections then
-                    for _, conn in ipairs(getconnections(obj.MouseButton1Click)) do
-                        if type(conn.Function) == "function" then task.spawn(conn.Function) end
-                    end
-                end
-            end)
-            return -- On stoppe la fonction pour ne pas faire crasher l'exécuteur mobile
-        end
-        return oldFS(obj, ...)
-    end
-end
-
 task.spawn(function()
-    local currentVersion = "V14.6"
+    local currentVersion = "V14.7"
 
     -- 🎵 SATISFYING STARTUP SOUND
     local function PlayStartupSound()
@@ -8022,12 +7998,68 @@ task.spawn(function()
         task.wait(0.5); elapsed = elapsed + 0.5
     end
 
+    local Core = {
+        Player = game.Players.LocalPlayer, Gui = PlayerGui, UIS = game:GetService("UserInputService"), Tween = game:GetService("TweenService"), Run = game:GetService("RunService"),
+        Theme = {
+            Obsidian = Color3.fromRGB(12, 8, 10), Volcanic = Color3.fromRGB(24, 14, 16), Ash = Color3.fromRGB(190, 170, 170),
+            LavaLight = Color3.fromRGB(255, 110, 20), FireRed = Color3.fromRGB(230, 25, 20), Ember = Color3.fromRGB(255, 170, 30),
+            White = Color3.fromRGB(250, 245, 245), Stroke = Color3.fromRGB(60, 20, 25), Shadow = Color3.fromRGB(0, 0, 0), PureRed = Color3.new(1, 0, 0)
+        },
+        Keys = { TP = "T", Clone = "V", Carpet = "Q", Kick = "K", Reset = "R", MenuToggle = "RightShift", Desync = "Z" }
+    }
+
+    local isMobile = Core.UIS.TouchEnabled and not Core.UIS.MouseEnabled
+    local globalScale = isMobile and 0.70 or 1 
+
+    -- =========================================================
+    -- 🛡️ LE LEURRE ANTI-CRASH DU CLONE (MOBILE ONLY)
+    -- =========================================================
+    if isMobile then
+        task.spawn(function()
+            while task.wait(0.5) do
+                pcall(function()
+                    local toolsFrames = Core.Gui:FindFirstChild("ToolsFrames")
+                    local qcFrame = toolsFrames and toolsFrames:FindFirstChild("QuantumCloner")
+                    if qcFrame then
+                        local realBtn = qcFrame:FindFirstChild("TeleportToClone")
+                        -- Si le bouton original est là, on le remplace par le leurre
+                        if realBtn and realBtn:IsA("GuiButton") then
+                            realBtn.Name = "SafeTeleportToClone" -- Lethal Hub ne le trouvera plus
+                            realBtn.Visible = false
+                            
+                            -- Le faux bouton que Lethal Hub va attaquer
+                            local fakeBtn = Instance.new("TextButton")
+                            fakeBtn.Name = "TeleportToClone"
+                            fakeBtn.Visible = false
+                            fakeBtn.Parent = qcFrame
+                            
+                            -- Quand Lethal Hub tire sur le leurre, on déclenche le vrai en sécurité
+                            local function safeTrigger()
+                                if getconnections then
+                                    for _, conn in ipairs(getconnections(realBtn.MouseButton1Click)) do
+                                        if type(conn.Function) == "function" then task.spawn(conn.Function) end
+                                    end
+                                    for _, conn in ipairs(getconnections(realBtn.Activated)) do
+                                        if type(conn.Function) == "function" then task.spawn(conn.Function) end
+                                    end
+                                end
+                            end
+                            
+                            fakeBtn.MouseButton1Up:Connect(safeTrigger)
+                            fakeBtn.MouseButton1Click:Connect(safeTrigger)
+                            fakeBtn.Activated:Connect(safeTrigger)
+                        end
+                    end
+                end)
+            end
+        end)
+    end
+
     -- 💾 LOADING SAVES
     local function LoadState()
         local defaultState = { 
             Main = false, Speed = false, Steal = false, Admin = false, Priority = false, Invis = false, DesyncPanel = false, MobileShow = true,
-            RHActive = false, RDActive = false, LastVersion = "V0",
-            Keys = { TP = "T", Clone = "V", Carpet = "Q", Kick = "K", Reset = "R", MenuToggle = "RightShift", Desync = "Z" }
+            RHActive = false, RDActive = false, LastVersion = "V0", Keys = Core.Keys
         }
         if readfile and isfile and isfile(saveFile) then
             local ok, data = pcall(function() return HttpService:JSONDecode(readfile(saveFile)) end)
@@ -8037,27 +8069,14 @@ task.spawn(function()
                 if data.RHActive ~= nil then defaultState.RHActive = data.RHActive end
                 if data.RDActive ~= nil then defaultState.RDActive = data.RDActive end
                 if data.LastVersion ~= nil then defaultState.LastVersion = data.LastVersion end
-                data.Keys = defaultState.Keys
                 return data 
             end
         end
         return defaultState
     end
     local initState = LoadState()
+    Core.Keys = initState.Keys
 
-    local Core = {
-        Player = game.Players.LocalPlayer, Gui = PlayerGui, UIS = game:GetService("UserInputService"), Tween = game:GetService("TweenService"), Run = game:GetService("RunService"),
-        Theme = {
-            Obsidian = Color3.fromRGB(12, 8, 10), Volcanic = Color3.fromRGB(24, 14, 16), Ash = Color3.fromRGB(190, 170, 170),
-            LavaLight = Color3.fromRGB(255, 110, 20), FireRed = Color3.fromRGB(230, 25, 20), Ember = Color3.fromRGB(255, 170, 30),
-            White = Color3.fromRGB(250, 245, 245), Stroke = Color3.fromRGB(60, 20, 25), Shadow = Color3.fromRGB(0, 0, 0), PureRed = Color3.new(1, 0, 0)
-        },
-        Keys = initState.Keys
-    }
-
-    local isMobile = Core.UIS.TouchEnabled and not Core.UIS.MouseEnabled
-    local globalScale = isMobile and 0.70 or 1 -- 📱 REDUCTION DE 30% POUR MOBILE
-    
     local function PlayTPSound()
         local sound = Instance.new("Sound", workspace)
         sound.SoundId = "rbxassetid://6042053626"; sound.Volume = 1.2; sound:Play()
@@ -8093,26 +8112,19 @@ task.spawn(function()
         end)
     end
     
-    -- =========================================================
-    -- 🤖 CLIC LETHAL HUB (PATCH 100% FIABLE VIA GETCONNECTIONS)
-    -- =========================================================
     local function Clk(button) 
         if not button then return end
         task.spawn(function()
             pcall(function()
-                local fired = false
                 if getconnections then
-                    for _, conn in ipairs(getconnections(button.MouseButton1Click)) do conn:Fire(); fired = true end
-                    for _, conn in ipairs(getconnections(button.Activated)) do conn:Fire(); fired = true end
-                end
-                if fired then return end
-
-                if firesignal then
-                    pcall(function() firesignal(button.MouseButton1Click) end)
-                    pcall(function() firesignal(button.Activated) end)
+                    for _, conn in ipairs(getconnections(button.MouseButton1Click)) do 
+                        if type(conn.Function) == "function" then task.spawn(conn.Function) end
+                    end
+                    for _, conn in ipairs(getconnections(button.Activated)) do 
+                        if type(conn.Function) == "function" then task.spawn(conn.Function) end
+                    end
                     return
                 end
-
                 if not isMobile then
                     local vim = game:GetService("VirtualInputManager")
                     local inset = game:GetService("GuiService"):GetGuiInset()
@@ -8127,42 +8139,39 @@ task.spawn(function()
     end
     _G.Clk = Clk
 
-    -- ⚡ FIX MOBILE DÉFINITIF : ENVOI SÉCURISÉ DES TOUCHES AU JEU
+    -- ⚡ ENVOI DE TOUCHE PUR ET SÉCURISÉ (Réveille Lethal Hub)
     local function SimulateKey(keyString)
         if not keyString then return end
         local success, keyCode = pcall(function() return Enum.KeyCode[keyString] end)
         if not success or not keyCode then return end
 
-        pcall(function()
+        task.spawn(function()
             if not isMobile then
-                local vim = game:GetService("VirtualInputManager")
-                vim:SendKeyEvent(true, keyCode, false, game)
-                task.wait(0.05)
-                vim:SendKeyEvent(false, keyCode, false, game)
+                pcall(function()
+                    local vim = game:GetService("VirtualInputManager")
+                    vim:SendKeyEvent(true, keyCode, false, game)
+                    task.wait(0.05)
+                    vim:SendKeyEvent(false, keyCode, false, game)
+                end)
             else
+                local charKey = string.lower(keyString)
                 local fakeInput = {
                     UserInputType = Enum.UserInputType.Keyboard,
                     KeyCode = keyCode,
                     UserInputState = Enum.UserInputState.Begin
                 }
                 setmetatable(fakeInput, {
-                    __index = function(t, k)
-                        if type(k) == "string" and (k:find("Is") or k:find("Get")) then
-                            return function() return false end
-                        end
-                        return nil
-                    end
+                    __index = function(t, k) return function() return false end end
                 })
-                
-                local charKey = string.lower(keyString)
 
                 if getconnections then
+                    -- Simuler l'Input (pour les menus)
                     for _, conn in ipairs(getconnections(game:GetService("UserInputService").InputBegan)) do
                         pcall(function() 
                             if type(conn.Function) == "function" then task.spawn(conn.Function, fakeInput, false) end 
                         end)
                     end
-                    
+                    -- Simuler la Souris (Très important pour le TP/Clone de Lethal Hub)
                     if #charKey == 1 then
                         for _, conn in ipairs(getconnections(Core.Player:GetMouse().KeyDown)) do
                             pcall(function() 
@@ -8212,7 +8221,7 @@ task.spawn(function()
     end
 
     -- =========================================================
-    -- 🛡️ STRICT DESYNC SYSTEM & TP FUNCTIONS
+    -- 🛡️ STRICT DESYNC SYSTEM
     -- =========================================================
     _G.IsDesynced = false; _G.AutoDesyncOnLoad = true; _G.DesyncInProgress = false; local hooked = false
     local function rakhook(packet)
@@ -8247,7 +8256,7 @@ task.spawn(function()
     end
 
     -- =========================================================
-    -- 📱 DRAGGABLE MOBILE PACK (TEXTE NET SANS FLOU)
+    -- 📱 DRAGGABLE MOBILE PACK
     -- =========================================================
     local MobileControls = Instance.new("Frame", SG)
     MobileControls.Name = "ScruliMobileButtons"; MobileControls.Size = UDim2.new(0, 60, 0, 180)
@@ -8264,13 +8273,12 @@ task.spawn(function()
         SimulateKey(Core.Keys.TP) 
     end)
     local mCL = CreateMobBtn("CLONE", UDim2.new(0,0,0,60), Core.Theme.LavaLight, function() 
-        SimulateKey(Core.Keys.Clone)
-        instantClone()
+        SimulateKey(Core.Keys.Clone) 
     end)
     local mRS = CreateMobBtn("RESET", UDim2.new(0,0,0,120), Color3.fromRGB(40,40,40), function() 
         local char = Core.Player.Character
         if char and char:FindFirstChild("HumanoidRootPart") then 
-            char.HumanoidRootPart.AssemblyLinearVelocity = Vector3.new(0, 6767676677, 0) -- Vitesse extrême anti-détection
+            char.HumanoidRootPart.AssemblyLinearVelocity = Vector3.new(0, 6767676677, 0)
         end
     end)
 
@@ -8350,7 +8358,7 @@ task.spawn(function()
     for _, child in ipairs(Core.Gui:GetChildren()) do if table.find(badGuis, child.Name) then NukeOldGui(child) elseif child.Name == "XiNotif" then InterceptXiNotif(child) end end
 
     -- =========================================================
-    -- 🔧 DRAG & UI FUNCTIONS (FIXED FOR MOBILE SCALING)
+    -- 🔧 DRAG & UI FUNCTIONS
     -- =========================================================
     local function MakeDraggable(topbar, frame)
         local dragging, dragInput, dragStart, startPos
@@ -8487,7 +8495,7 @@ task.spawn(function()
         local d = Instance.new("TextLabel", c); d.Size = UDim2.new(1, -15, 0, 30); d.Position = UDim2.new(0, 10, 0, 30); d.BackgroundTransparency = 1; d.Text = desc; d.Font = Enum.Font.GothamMedium; d.TextColor3 = Core.Theme.Ash; d.TextSize = 12; d.TextXAlignment = Enum.TextXAlignment.Left; d.TextWrapped = true
     end
 
-    AddUpdateItem("📱 CLONE ANTI-KICK & CRASH FIX", "Intercepted the native clone button to block any crash-causing commands from running during TP, while preventing double clicks that trigger Anti-Cheat.")
+    AddUpdateItem("📱 CLONE ANTI-CRASH LEURRE", "Created a fake clone button to intercept the original code safely without triggering crashes or anti-cheat flags.")
     AddUpdateItem("⚙️ FAST RESET RESTORED", "Restored your original high-speed reset function (it works perfectly and is undetected).")
 
     local function ShowUpdateLog()
