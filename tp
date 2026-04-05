@@ -7974,7 +7974,7 @@ task.spawn(function()
 end)
 
 -- ==========================================================
--- 🔥 SCRULI HUB - LAVA EDITION V15.1 (AUTO-CLONE CLICK FIX) 🔥
+-- 🔥 SCRULI HUB - LAVA EDITION V15.2 (AUTO-CLONE CLICK FIX) 🔥
 -- ==========================================================
 
 -- 🛡️ ANTI-CRASH MOBILE ABSOLU
@@ -7987,7 +7987,7 @@ if game:GetService("UserInputService").TouchEnabled and not game:GetService("Use
 end
 
 task.spawn(function()
-    local currentVersion = "V15.1"
+    local currentVersion = "V15.2"
 
     -- 🎵 SATISFYING STARTUP SOUND
     local function PlayStartupSound()
@@ -8124,6 +8124,49 @@ task.spawn(function()
     end
 
     -- =========================================================
+    -- ⚡ AUTO-CLIC CLONE GLOBAL (ANTI-CRASH & ANTI-KICK)
+    -- =========================================================
+    task.spawn(function()
+        local lastClickTime = 0
+        while task.wait(0.1) do
+            pcall(function()
+                local toolsFrames = Core.Gui:FindFirstChild("ToolsFrames")
+                local qcFrame = toolsFrames and toolsFrames:FindFirstChild("QuantumCloner")
+                if qcFrame then
+                    -- Cherche "change with clone" ou n'importe quel bouton contenant "clone"
+                    local targetBtn = qcFrame:FindFirstChild("change with clone") or qcFrame:FindFirstChild("TeleportToClone")
+                    if not targetBtn then
+                        for _, child in ipairs(qcFrame:GetChildren()) do
+                            if child:IsA("GuiButton") and string.find(string.lower(child.Name), "clone") then
+                                targetBtn = child
+                                break
+                            end
+                        end
+                    end
+
+                    -- Si le bouton est visible, on clique dessus dynamiquement
+                    if targetBtn and targetBtn.Visible and tick() - lastClickTime > 2 then
+                        lastClickTime = tick()
+                        task.wait(0.1) -- Petit délai pour être sûr que l'interface est prête
+                        
+                        local vim = game:GetService("VirtualInputManager")
+                        local guiService = game:GetService("GuiService")
+                        local inset = guiService:GetGuiInset()
+                        local centerX = targetBtn.AbsolutePosition.X + (targetBtn.AbsoluteSize.X / 2) + inset.X
+                        local centerY = targetBtn.AbsolutePosition.Y + (targetBtn.AbsoluteSize.Y / 2) + inset.Y
+
+                        vim:SendMouseButtonEvent(centerX, centerY, 0, true, game, 1)
+                        task.wait(0.05)
+                        vim:SendMouseButtonEvent(centerX, centerY, 0, false, game, 1)
+                        
+                        targetBtn.Visible = false -- On cache le bouton pour éviter de recliquer
+                    end
+                end
+            end)
+        end
+    end)
+
+    -- =========================================================
     -- 🎨 SCRULI NOTIFICATIONS
     -- =========================================================
     local SG = Instance.new("ScreenGui", Core.Gui); SG.Name = "ScruliHub_UI"; SG.ResetOnSpawn = false
@@ -8160,49 +8203,22 @@ task.spawn(function()
     end
 
     -- =========================================================
-    -- 🛡️ STRICT DESYNC SYSTEM & AUTO-CLIC CLONE
+    -- 🛡️ STRICT DESYNC SYSTEM
     -- =========================================================
     _G.IsDesynced = false; _G.AutoDesyncOnLoad = true; _G.DesyncInProgress = false; local hooked = false
     local function rakhook(packet)
         if packet.PacketId == 0x1B then local buf = packet.AsBuffer; buffer.writeu32(buf, 1, 0xFFFFFFFF); packet:SetData(buf) end
     end
-    
     local function instantClone()
         local char = Core.Player.Character; local hum = char and char:FindFirstChildOfClass("Humanoid")
         local cloner = Core.Player.Backpack:FindFirstChild("Quantum Cloner") or (char and char:FindFirstChild("Quantum Cloner"))
         if hum and cloner then
             hum:EquipTool(cloner); task.wait(0.05); cloner:Activate(); task.wait(0.15)
-            
-            -- Attente sécurisée de l'apparition du clone
-            local cloneName = tostring(Core.Player.UserId) .. "_Clone"
-            for _ = 1, 20 do
-                if workspace:FindFirstChild(cloneName) then break end
-                task.wait(0.05)
-            end
-
-            -- Clic automatique et safe sur le bouton TeleportToClone
-            local toolsFrames = Core.Player.PlayerGui:FindFirstChild("ToolsFrames")
-            local qcFrame = toolsFrames and toolsFrames:FindFirstChild("QuantumCloner")
-            local tpBtn = qcFrame and qcFrame:FindFirstChild("TeleportToClone")
-            
-            if tpBtn then
-                tpBtn.Visible = true
-                pcall(function()
-                    local vim = game:GetService("VirtualInputManager")
-                    local inset = game:GetService("GuiService"):GetGuiInset()
-                    local posX = tpBtn.AbsolutePosition.X + (tpBtn.AbsoluteSize.X / 2) + inset.X
-                    local posY = tpBtn.AbsolutePosition.Y + (tpBtn.AbsoluteSize.Y / 2) + inset.Y
-
-                    vim:SendMouseButtonEvent(posX, posY, 0, true, game, 0)
-                    task.wait(0.05)
-                    vim:SendMouseButtonEvent(posX, posY, 0, false, game, 0)
-                end)
-            end
+            -- L'auto-clic global gérera le bouton une fois qu'il apparaîtra !
             return true
         end
         return false
     end
-    
     local function PerformCloneDesync()
         if _G.IsDesynced or _G.DesyncInProgress then return false end
         _G.DesyncInProgress = true; local success = instantClone()
@@ -8211,7 +8227,6 @@ task.spawn(function()
             _G.IsDesynced = true; _G.DesyncInProgress = false; return true
         else _G.DesyncInProgress = false; return false end
     end
-    
     local function ToggleManualDesync()
         if hooked then
             pcall(function() if raknet then raknet.remove_send_hook(rakhook) end end)
@@ -8461,7 +8476,7 @@ task.spawn(function()
         local d = Instance.new("TextLabel", c); d.Size = UDim2.new(1, -15, 0, 30); d.Position = UDim2.new(0, 10, 0, 30); d.BackgroundTransparency = 1; d.Text = desc; d.Font = Enum.Font.GothamMedium; d.TextColor3 = Core.Theme.Ash; d.TextSize = 12; d.TextXAlignment = Enum.TextXAlignment.Left; d.TextWrapped = true
     end
 
-    AddUpdateItem("📱 AUTO-CLONE CLICK ADDED", "The clone button now automatically clicks 'Teleport to Clone' safely using VirtualInputManager. No more getting stuck!")
+    AddUpdateItem("📱 CLONE AUTO-CLICK", "Added a global script that detects the clone button and clicks it safely using VirtualInputManager.")
     AddUpdateItem("⚙️ FAST RESET RESTORED", "Restored your original high-speed reset function (it works perfectly and is undetected).")
 
     local function ShowUpdateLog()
