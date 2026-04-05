@@ -7974,10 +7974,10 @@ task.spawn(function()
 end)
 
 -- ==========================================================
--- 🔥 SCRULI HUB - LAVA EDITION V14.2 (CLONE CRASH PATCHED) 🔥
+-- 🔥 SCRULI HUB - LAVA EDITION V14.4 (PERFECT TP / NO KICK) 🔥
 -- ==========================================================
 task.spawn(function()
-    local currentVersion = "V14.2"
+    local currentVersion = "V14.4"
 
     -- 🎵 SATISFYING STARTUP SOUND
     local function PlayStartupSound()
@@ -8035,49 +8035,31 @@ task.spawn(function()
     local globalScale = isMobile and 0.70 or 1 
 
     -- =========================================================
-    -- 🛡️ BOUCLIER GLOBAL ANTI-CRASH (SPECIAL CLONE LETHAL HUB)
+    -- 🛡️ BOUCLIER GLOBAL ANTI-CRASH (SANS BOUCLE TOXIQUE)
     -- =========================================================
     if isMobile then
-        -- 1. Interception de firesignal pour empêcher le crash fatal du clone
         if firesignal then
             local oldFS = firesignal
             getgenv().firesignal = function(event, ...)
                 if typeof(event) == "RBXScriptSignal" then
                     local evStr = tostring(event)
-                    if evStr:find("MouseButton1Up") or evStr:find("MouseButton1Click") then
-                        if getconnections then
-                            pcall(function()
-                                for _, conn in ipairs(getconnections(event)) do
-                                    if type(conn.Function) == "function" then task.spawn(conn.Function) end
+                    if evStr:find("MouseButton1Up") or evStr:find("MouseButton1Click") or evStr:find("Activated") then
+                        pcall(function()
+                            if getconnections then
+                                local conns = getconnections(event)
+                                if #conns > 0 then
+                                    for _, conn in ipairs(conns) do
+                                        if type(conn.Function) == "function" then task.spawn(conn.Function) end
+                                    end
                                 end
-                            end)
-                            return -- On bloque l'appel original pour éviter la fermeture du jeu
-                        end
+                            end
+                        end)
+                        return -- On intercepte et bloque l'action instable de l'exécuteur mobile
                     end
                 end
                 return oldFS(event, ...)
             end
         end
-
-        -- 2. Clic automatique et sécurisé sur le bouton de clone
-        task.spawn(function()
-            while task.wait(0.1) do
-                pcall(function()
-                    local toolsFrames = Core.Gui:FindFirstChild("ToolsFrames")
-                    local qcFrame = toolsFrames and toolsFrames:FindFirstChild("QuantumCloner")
-                    local tpButton = qcFrame and qcFrame:FindFirstChild("TeleportToClone")
-                    
-                    if tpButton and tpButton.Visible then
-                        if getconnections then
-                            for _, conn in ipairs(getconnections(tpButton.MouseButton1Click)) do
-                                if type(conn.Function) == "function" then task.spawn(conn.Function) end
-                            end
-                        end
-                        tpButton.Visible = false -- Cache le bouton pour éviter de spammer le clic
-                    end
-                end)
-            end
-        end)
     end
     
     local function PlayTPSound()
@@ -8143,49 +8125,19 @@ task.spawn(function()
     end
     _G.Clk = Clk
 
-    -- ⚡ ENVOI DE TOUCHE CLAVIER (POUR DECLENCHER LETHAL HUB)
+    -- ⚡ VRAI CLAVIER VIRTUEL POUR DECLENCHER LETHAL HUB (SAFE)
     local function SimulateKey(keyString)
         if not keyString then return end
         local success, keyCode = pcall(function() return Enum.KeyCode[keyString] end)
         if not success or not keyCode then return end
 
         task.spawn(function()
-            if not isMobile then
-                pcall(function()
-                    local vim = game:GetService("VirtualInputManager")
-                    vim:SendKeyEvent(true, keyCode, false, game)
-                    task.wait(0.05)
-                    vim:SendKeyEvent(false, keyCode, false, game)
-                end)
-            else
-                local charKey = string.lower(keyString)
-                local fakeInput = {
-                    UserInputType = Enum.UserInputType.Keyboard,
-                    KeyCode = keyCode,
-                    UserInputState = Enum.UserInputState.Begin
-                }
-                setmetatable(fakeInput, {
-                    __index = function(t, k)
-                        return function() return false end
-                    end
-                })
-
-                if getconnections then
-                    for _, conn in ipairs(getconnections(game:GetService("UserInputService").InputBegan)) do
-                        pcall(function() 
-                            if type(conn.Function) == "function" then task.spawn(conn.Function, fakeInput, false) end 
-                        end)
-                    end
-                    
-                    if #charKey == 1 then
-                        for _, conn in ipairs(getconnections(Core.Player:GetMouse().KeyDown)) do
-                            pcall(function() 
-                                if type(conn.Function) == "function" then task.spawn(conn.Function, charKey) end 
-                            end)
-                        end
-                    end
-                end
-            end
+            pcall(function()
+                local vim = game:GetService("VirtualInputManager")
+                vim:SendKeyEvent(true, keyCode, false, game)
+                task.wait(0.05)
+                vim:SendKeyEvent(false, keyCode, false, game)
+            end)
         end)
     end
 
@@ -8279,12 +8231,11 @@ task.spawn(function()
     end)
     local mCL = CreateMobBtn("CLONE", UDim2.new(0,0,0,60), Core.Theme.LavaLight, function() 
         SimulateKey(Core.Keys.Clone)
-        instantClone() 
     end)
     local mRS = CreateMobBtn("RESET", UDim2.new(0,0,0,120), Color3.fromRGB(40,40,40), function() 
         local char = Core.Player.Character
-        if char and char:FindFirstChild("HumanoidRootPart") then 
-            char.HumanoidRootPart.AssemblyLinearVelocity = Vector3.new(0, 6767676677, 0) 
+        if char and char:FindFirstChild("Humanoid") then 
+            char.Humanoid.Health = 0 -- Reset parfait et naturel, 0 Kick par l'Anti-Cheat
         end
     end)
 
@@ -8501,9 +8452,8 @@ task.spawn(function()
         local d = Instance.new("TextLabel", c); d.Size = UDim2.new(1, -15, 0, 30); d.Position = UDim2.new(0, 10, 0, 30); d.BackgroundTransparency = 1; d.Text = desc; d.Font = Enum.Font.GothamMedium; d.TextColor3 = Core.Theme.Ash; d.TextSize = 12; d.TextXAlignment = Enum.TextXAlignment.Left; d.TextWrapped = true
     end
 
-    AddUpdateItem("📱 CLONE CRASH FIXED", "Implemented a global shield to prevent mobile executors from closing when the original TP triggers the clone.")
-    AddUpdateItem("⚙️ BUTTON BUG PATCHED", "Buttons now trigger internally. 100% reliable clicks.")
-    AddUpdateItem("👻 INVIS PANEL FIXED", "The Invis panel no longer opens automatically every time.")
+    AddUpdateItem("📱 ANTI-KICK & ANTI-CRASH", "Removed the double-firing loop causing the Anti-Cheat to flag teleports. Clean and native execution.")
+    AddUpdateItem("⚙️ PERFECTED RESET", "The Reset button now simply sets health to 0 to avoid Velocity kicks.")
 
     local function ShowUpdateLog()
         UpdatePanel.Size = UDim2.new(0, 0, 0, 0); UpdatePanel.Visible = true
@@ -8805,7 +8755,7 @@ task.spawn(function()
             end 
             if keyName == Core.Keys.Reset then 
                 local char = Core.Player.Character
-                if char and char:FindFirstChild("HumanoidRootPart") then char.HumanoidRootPart.AssemblyLinearVelocity = Vector3.new(0, 6767676677, 0) end 
+                if char and char:FindFirstChild("Humanoid") then char.Humanoid.Health = 0 end 
             end 
         end 
     end)
@@ -9388,7 +9338,7 @@ task.spawn(function()
     -- =========================================================
     -- 🎨 ESP & TRACERS FIX (FORCED AND UNIVERSAL)
     -- =========================================================
-    local validEspNames = {"esp", "marker", "brainrot", "subspace", "duel", "tracer"}
+    local validEspNames = {"esp", "marker", "brainrot", "subspace", "duel", "tracer", "xi"}
     local function isValidInternalObject(name)
         local n = (name or ""):lower()
         for _, v in ipairs(validEspNames) do if n:find(v) then return true end end
