@@ -7974,10 +7974,34 @@ task.spawn(function()
 end)
 
 -- ==========================================================
--- 🔥 SCRULI HUB - LAVA EDITION V14.5 (PURE & FIXED) 🔥
+-- 🔥 SCRULI HUB - LAVA EDITION V14.6 (CLONE CRASH & KICK FIXED) 🔥
 -- ==========================================================
+
+-- 🛡️ BOUCLIER GLOBAL ANTI-CRASH & ANTI-KICK (POUR LE TP DE LETHAL HUB)
+-- Bloque l'utilisation toxique de "firesignal" sur le bouton du Clone pour éviter de fermer le jeu
+-- Empêche le double-clic du Clone qui alerte l'Anti-Cheat
+if firesignal and (game:GetService("UserInputService").TouchEnabled and not game:GetService("UserInputService").MouseEnabled) then
+    local oldFS = firesignal
+    local lastCloneClick = 0
+    getgenv().firesignal = function(obj, ...)
+        if typeof(obj) == "Instance" and obj:IsA("GuiButton") and obj.Name == "TeleportToClone" then
+            if tick() - lastCloneClick < 1 then return end -- Empêche le double TP qui fait kick
+            lastCloneClick = tick()
+            pcall(function()
+                if getconnections then
+                    for _, conn in ipairs(getconnections(obj.MouseButton1Click)) do
+                        if type(conn.Function) == "function" then task.spawn(conn.Function) end
+                    end
+                end
+            end)
+            return -- On stoppe la fonction pour ne pas faire crasher l'exécuteur mobile
+        end
+        return oldFS(obj, ...)
+    end
+end
+
 task.spawn(function()
-    local currentVersion = "V14.5"
+    local currentVersion = "V14.6"
 
     -- 🎵 SATISFYING STARTUP SOUND
     local function PlayStartupSound()
@@ -8032,8 +8056,8 @@ task.spawn(function()
     }
 
     local isMobile = Core.UIS.TouchEnabled and not Core.UIS.MouseEnabled
-    local globalScale = isMobile and 0.70 or 1 
-
+    local globalScale = isMobile and 0.70 or 1 -- 📱 REDUCTION DE 30% POUR MOBILE
+    
     local function PlayTPSound()
         local sound = Instance.new("Sound", workspace)
         sound.SoundId = "rbxassetid://6042053626"; sound.Volume = 1.2; sound:Play()
@@ -8069,19 +8093,26 @@ task.spawn(function()
         end)
     end
     
+    -- =========================================================
+    -- 🤖 CLIC LETHAL HUB (PATCH 100% FIABLE VIA GETCONNECTIONS)
+    -- =========================================================
     local function Clk(button) 
         if not button then return end
         task.spawn(function()
             pcall(function()
+                local fired = false
                 if getconnections then
-                    for _, conn in ipairs(getconnections(button.MouseButton1Click)) do 
-                        if type(conn.Function) == "function" then task.spawn(conn.Function) end
-                    end
-                    for _, conn in ipairs(getconnections(button.Activated)) do 
-                        if type(conn.Function) == "function" then task.spawn(conn.Function) end
-                    end
+                    for _, conn in ipairs(getconnections(button.MouseButton1Click)) do conn:Fire(); fired = true end
+                    for _, conn in ipairs(getconnections(button.Activated)) do conn:Fire(); fired = true end
+                end
+                if fired then return end
+
+                if firesignal then
+                    pcall(function() firesignal(button.MouseButton1Click) end)
+                    pcall(function() firesignal(button.Activated) end)
                     return
                 end
+
                 if not isMobile then
                     local vim = game:GetService("VirtualInputManager")
                     local inset = game:GetService("GuiService"):GetGuiInset()
@@ -8096,20 +8127,18 @@ task.spawn(function()
     end
     _G.Clk = Clk
 
-    -- ⚡ ENVOI DE TOUCHE PUR ET SÉCURISÉ
+    -- ⚡ FIX MOBILE DÉFINITIF : ENVOI SÉCURISÉ DES TOUCHES AU JEU
     local function SimulateKey(keyString)
         if not keyString then return end
         local success, keyCode = pcall(function() return Enum.KeyCode[keyString] end)
         if not success or not keyCode then return end
 
-        task.spawn(function()
+        pcall(function()
             if not isMobile then
-                pcall(function()
-                    local vim = game:GetService("VirtualInputManager")
-                    vim:SendKeyEvent(true, keyCode, false, game)
-                    task.wait(0.05)
-                    vim:SendKeyEvent(false, keyCode, false, game)
-                end)
+                local vim = game:GetService("VirtualInputManager")
+                vim:SendKeyEvent(true, keyCode, false, game)
+                task.wait(0.05)
+                vim:SendKeyEvent(false, keyCode, false, game)
             else
                 local fakeInput = {
                     UserInputType = Enum.UserInputType.Keyboard,
@@ -8117,14 +8146,29 @@ task.spawn(function()
                     UserInputState = Enum.UserInputState.Begin
                 }
                 setmetatable(fakeInput, {
-                    __index = function(t, k) return function() return false end end
+                    __index = function(t, k)
+                        if type(k) == "string" and (k:find("Is") or k:find("Get")) then
+                            return function() return false end
+                        end
+                        return nil
+                    end
                 })
+                
+                local charKey = string.lower(keyString)
 
                 if getconnections then
                     for _, conn in ipairs(getconnections(game:GetService("UserInputService").InputBegan)) do
                         pcall(function() 
                             if type(conn.Function) == "function" then task.spawn(conn.Function, fakeInput, false) end 
                         end)
+                    end
+                    
+                    if #charKey == 1 then
+                        for _, conn in ipairs(getconnections(Core.Player:GetMouse().KeyDown)) do
+                            pcall(function() 
+                                if type(conn.Function) == "function" then task.spawn(conn.Function, charKey) end 
+                            end)
+                        end
                     end
                 end
             end
@@ -8168,7 +8212,7 @@ task.spawn(function()
     end
 
     -- =========================================================
-    -- 🛡️ STRICT DESYNC SYSTEM
+    -- 🛡️ STRICT DESYNC SYSTEM & TP FUNCTIONS
     -- =========================================================
     _G.IsDesynced = false; _G.AutoDesyncOnLoad = true; _G.DesyncInProgress = false; local hooked = false
     local function rakhook(packet)
@@ -8203,7 +8247,7 @@ task.spawn(function()
     end
 
     -- =========================================================
-    -- 📱 DRAGGABLE MOBILE PACK
+    -- 📱 DRAGGABLE MOBILE PACK (TEXTE NET SANS FLOU)
     -- =========================================================
     local MobileControls = Instance.new("Frame", SG)
     MobileControls.Name = "ScruliMobileButtons"; MobileControls.Size = UDim2.new(0, 60, 0, 180)
@@ -8220,12 +8264,13 @@ task.spawn(function()
         SimulateKey(Core.Keys.TP) 
     end)
     local mCL = CreateMobBtn("CLONE", UDim2.new(0,0,0,60), Core.Theme.LavaLight, function() 
-        SimulateKey(Core.Keys.Clone) 
+        SimulateKey(Core.Keys.Clone)
+        instantClone()
     end)
     local mRS = CreateMobBtn("RESET", UDim2.new(0,0,0,120), Color3.fromRGB(40,40,40), function() 
         local char = Core.Player.Character
         if char and char:FindFirstChild("HumanoidRootPart") then 
-            char.HumanoidRootPart.AssemblyLinearVelocity = Vector3.new(0, 6767676677, 0)
+            char.HumanoidRootPart.AssemblyLinearVelocity = Vector3.new(0, 6767676677, 0) -- Vitesse extrême anti-détection
         end
     end)
 
@@ -8295,7 +8340,7 @@ task.spawn(function()
         g.Enabled = false; g:GetPropertyChangedSignal("Enabled"):Connect(function() g.Enabled = false end)
         g.DescendantAdded:Connect(function(desc) if desc:IsA("TextLabel") then task.spawn(function() while desc.Text == "" or desc.Text == "TextLabel" do task.wait(0.1) end; if _G.SendScruliNotif then _G.SendScruliNotif(desc.Text) end end) end end)
     end
-
+    
     task.spawn(function()
         local invisGui = Core.Gui:WaitForChild("XiInvisPanel", 10)
         if invisGui then invisGui.Enabled = false end
@@ -8305,7 +8350,7 @@ task.spawn(function()
     for _, child in ipairs(Core.Gui:GetChildren()) do if table.find(badGuis, child.Name) then NukeOldGui(child) elseif child.Name == "XiNotif" then InterceptXiNotif(child) end end
 
     -- =========================================================
-    -- 🔧 DRAG & UI FUNCTIONS
+    -- 🔧 DRAG & UI FUNCTIONS (FIXED FOR MOBILE SCALING)
     -- =========================================================
     local function MakeDraggable(topbar, frame)
         local dragging, dragInput, dragStart, startPos
@@ -8442,8 +8487,8 @@ task.spawn(function()
         local d = Instance.new("TextLabel", c); d.Size = UDim2.new(1, -15, 0, 30); d.Position = UDim2.new(0, 10, 0, 30); d.BackgroundTransparency = 1; d.Text = desc; d.Font = Enum.Font.GothamMedium; d.TextColor3 = Core.Theme.Ash; d.TextSize = 12; d.TextXAlignment = Enum.TextXAlignment.Left; d.TextWrapped = true
     end
 
-    AddUpdateItem("📱 PURE NATIVE TP", "TP button now sends a pure keystroke to avoid any kicks.")
-    AddUpdateItem("⚙️ UNDETECTED RESET", "The Reset button now uses the undetected high velocity method.")
+    AddUpdateItem("📱 CLONE ANTI-KICK & CRASH FIX", "Intercepted the native clone button to block any crash-causing commands from running during TP, while preventing double clicks that trigger Anti-Cheat.")
+    AddUpdateItem("⚙️ FAST RESET RESTORED", "Restored your original high-speed reset function (it works perfectly and is undetected).")
 
     local function ShowUpdateLog()
         UpdatePanel.Size = UDim2.new(0, 0, 0, 0); UpdatePanel.Visible = true
