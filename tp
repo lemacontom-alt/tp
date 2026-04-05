@@ -7974,19 +7974,13 @@ task.spawn(function()
 end)
 
 -- ==========================================================
--- 🔥 SCRULI HUB - LAVA EDITION V15.5 (CLONE CHIRURGICAL FIX) 🔥
+-- 🔥 SCRULI HUB - LAVA EDITION V15.6 (PURE INSTANT CLONE) 🔥
 -- ==========================================================
 
--- 🛡️ ANTI-CRASH MOBILE ABSOLU
-if game:GetService("UserInputService").TouchEnabled and not game:GetService("UserInputService").MouseEnabled then
-    pcall(function() getgenv().firesignal = nil end)
-    pcall(function() getgenv().keypress = nil end)
-    pcall(function() getgenv().keyrelease = nil end)
-end
-
 task.spawn(function()
-    local currentVersion = "V15.5"
+    local currentVersion = "V15.6"
 
+    -- 🎵 SATISFYING STARTUP SOUND
     local function PlayStartupSound()
         local sound = Instance.new("Sound", workspace)
         sound.SoundId = "rbxassetid://4590657391" 
@@ -7998,12 +7992,14 @@ task.spawn(function()
     local HttpService = game:GetService("HttpService")
     local saveFile = "ScruliLava_SaveState.json"
 
+    -- ⏳ WAITING FOR MAIN HUB
     local PlayerGui = game.Players.LocalPlayer:WaitForChild("PlayerGui")
     local timeout = 30; local elapsed = 0
     while not PlayerGui:FindFirstChild("AutoStealUI") and elapsed < timeout do
         task.wait(0.5); elapsed = elapsed + 0.5
     end
 
+    -- 💾 LOADING SAVES
     local function LoadState()
         local defaultState = { 
             Main = false, Speed = false, Steal = false, Admin = false, Priority = false, Invis = false, DesyncPanel = false, MobileShow = true,
@@ -8073,8 +8069,36 @@ task.spawn(function()
             while frame.Parent do r = (r + 1) % 360; grad.Rotation = r; task.wait(0.04) end
         end)
     end
+    
+    local function Clk(button) 
+        if not button then return end
+        task.spawn(function()
+            pcall(function()
+                if getconnections then
+                    for _, conn in ipairs(getconnections(button.MouseButton1Click)) do 
+                        if type(conn.Function) == "function" then task.spawn(conn.Function) end 
+                    end
+                    for _, conn in ipairs(getconnections(button.Activated)) do 
+                        if type(conn.Function) == "function" then task.spawn(conn.Function) end 
+                    end
+                    return
+                end
 
-    -- ⚡ ENVOI DE TOUCHE PUR ET SÉCURISÉ (Réveille Lethal Hub)
+                if not isMobile then
+                    local vim = game:GetService("VirtualInputManager")
+                    local inset = game:GetService("GuiService"):GetGuiInset()
+                    local x = button.AbsolutePosition.X + (button.AbsoluteSize.X / 2) + inset.X
+                    local y = button.AbsolutePosition.Y + (button.AbsoluteSize.Y / 2) + 58
+                    vim:SendMouseButtonEvent(x, y, 0, true, game, 0)
+                    task.wait(0.05)
+                    vim:SendMouseButtonEvent(x, y, 0, false, game, 0)
+                end
+            end)
+        end)
+    end
+    _G.Clk = Clk
+
+    -- ⚡ ENVOI DE TOUCHE PUR ET SÉCURISÉ (Réveille le Script en arrière plan)
     local function SimulateKey(keyString)
         if not keyString then return end
         local success, keyCode = pcall(function() return Enum.KeyCode[keyString] end)
@@ -8091,68 +8115,81 @@ task.spawn(function()
     end
 
     -- =========================================================
-    -- 🎯 AUTO-CLICKER CHIRURGICAL DU CLONE (ANTI-KICK)
+    -- 🎯 1. FIX: LA VRAIE FONCTION INSTANT CLONE (L'ORIGINALE)
     -- =========================================================
-    task.spawn(function()
-        local lastClickTime = 0
-        while task.wait(0.1) do
+    local function instantClone()
+        if _G.isCloning then return end
+        _G.isCloning = true
+
+        local ok, err = pcall(function()
+            local char = Core.Player.Character
+            local hum = char and char:FindFirstChildOfClass("Humanoid")
+            if not (char and hum) then error("No character") end
+
+            local cloner = Core.Player.Backpack:FindFirstChild("Quantum Cloner") or char:FindFirstChild("Quantum Cloner")
+
+            if not cloner then error("No Quantum Cloner") end
+
             pcall(function()
-                local toolsFrames = Core.Player.PlayerGui:FindFirstChild("ToolsFrames")
-                local qcFrame = toolsFrames and toolsFrames:FindFirstChild("QuantumCloner")
-                
-                if qcFrame then
-                    local targetBtn = qcFrame:FindFirstChild("TeleportToClone") or qcFrame:FindFirstChild("change with clone")
-                    -- Fallback par type si le nom est bizarre
-                    if not targetBtn then
-                        for _, child in ipairs(qcFrame:GetChildren()) do
-                            if child:IsA("GuiButton") then targetBtn = child; break end
-                        end
-                    end
-
-                    if targetBtn and targetBtn.Visible and (tick() - lastClickTime > 2) then
-                        lastClickTime = tick()
-                        task.wait(0.1) -- Laisse le jeu enregistrer le clone
-                        
-                        local clicked = false
-                        if getconnections then
-                            -- On cherche la connexion "Activated"
-                            for _, conn in ipairs(getconnections(targetBtn.Activated)) do
-                                if type(conn.Function) == "function" then
-                                    task.spawn(conn.Function)
-                                    clicked = true
-                                    break -- 🛑 CRUCIAL : On s'arrête ici pour ne pas faire de double TP !
-                                end
-                            end
-                            
-                            -- Si "Activated" n'existe pas, on tente "MouseButton1Click"
-                            if not clicked then
-                                for _, conn in ipairs(getconnections(targetBtn.MouseButton1Click)) do
-                                    if type(conn.Function) == "function" then
-                                        task.spawn(conn.Function)
-                                        clicked = true
-                                        break -- 🛑 Un seul clic.
-                                    end
-                                end
-                            end
-
-                            -- En dernier recours : "MouseButton1Up"
-                            if not clicked then
-                                for _, conn in ipairs(getconnections(targetBtn.MouseButton1Up)) do
-                                    if type(conn.Function) == "function" then
-                                        task.spawn(conn.Function)
-                                        clicked = true
-                                        break
-                                    end
-                                end
-                            end
-                        end
-                        
-                        targetBtn.Visible = false -- Cacher pour l'esthétique
-                    end
-                end
+                hum:EquipTool(cloner)
             end)
-        end
-    end)
+
+            task.wait(0.05)
+            cloner:Activate()
+            task.wait(0.05)
+
+            local cloneName = tostring(Core.Player.UserId) .. "_Clone"
+            for _ = 1, 100 do
+                if workspace:FindFirstChild(cloneName) then break end
+                task.wait(0.1)
+            end
+
+            if not workspace:FindFirstChild(cloneName) then
+                error("Clone introuvable")
+            end
+
+            local toolsFrames = Core.Player.PlayerGui:FindFirstChild("ToolsFrames")
+            local qcFrame = toolsFrames and toolsFrames:FindFirstChild("QuantumCloner")
+            -- Fallback si le nom est "change with clone" ou "TeleportToClone"
+            local tpButton = (qcFrame and qcFrame:FindFirstChild("TeleportToClone")) or (qcFrame and qcFrame:FindFirstChild("change with clone"))
+            if not tpButton then error("Teleport button missing") end
+
+            tpButton.Visible = true
+
+            local clicked = false
+            if getconnections then
+                pcall(function()
+                    for _, conn in ipairs(getconnections(tpButton.MouseButton1Click)) do
+                        if type(conn.Function) == "function" then task.spawn(conn.Function); clicked = true end
+                    end
+                    for _, conn in ipairs(getconnections(tpButton.MouseButton1Up)) do
+                        if type(conn.Function) == "function" then task.spawn(conn.Function); clicked = true end
+                    end
+                    for _, conn in ipairs(getconnections(tpButton.Activated)) do
+                        if type(conn.Function) == "function" then task.spawn(conn.Function); clicked = true end
+                    end
+                end)
+            end
+            
+            if not clicked then
+                if firesignal then
+                    pcall(function() firesignal(tpButton.MouseButton1Click) end)
+                    pcall(function() firesignal(tpButton.MouseButton1Up) end)
+                else
+                    local vim = game:GetService("VirtualInputManager")
+                    local inset = game:GetService("GuiService"):GetGuiInset()
+                    local pos = tpButton.AbsolutePosition + (tpButton.AbsoluteSize / 2) + inset
+
+                    vim:SendMouseButtonEvent(pos.X, pos.Y, 0, true, game, 1)
+                    task.wait()
+                    vim:SendMouseButtonEvent(pos.X, pos.Y, 0, false, game, 1)
+                end
+            end
+        end)
+
+        _G.isCloning = false
+    end
+    _G.instantClone = instantClone
 
     -- =========================================================
     -- 🎨 SCRULI NOTIFICATIONS
@@ -8198,24 +8235,14 @@ task.spawn(function()
         if packet.PacketId == 0x1B then local buf = packet.AsBuffer; buffer.writeu32(buf, 1, 0xFFFFFFFF); packet:SetData(buf) end
     end
     
-    local function instantClone()
-        local char = Core.Player.Character; local hum = char and char:FindFirstChildOfClass("Humanoid")
-        local cloner = Core.Player.Backpack:FindFirstChild("Quantum Cloner") or (char and char:FindFirstChild("Quantum Cloner"))
-        if hum and cloner then
-            hum:EquipTool(cloner); task.wait(0.05); cloner:Activate(); task.wait(0.15)
-            return true
-        end
-        return false
-    end
-    
     local function PerformCloneDesync()
         if _G.IsDesynced or _G.DesyncInProgress then return false end
-        _G.DesyncInProgress = true; local success = instantClone()
-        if success then
-            task.wait(0.3); pcall(function() if not hooked and raknet then raknet.add_send_hook(rakhook); hooked = true end end)
-            _G.IsDesynced = true; _G.DesyncInProgress = false; return true
-        else _G.DesyncInProgress = false; return false end
+        _G.DesyncInProgress = true
+        task.spawn(instantClone) -- Utilise la fonction pure
+        task.wait(0.3); pcall(function() if not hooked and raknet then raknet.add_send_hook(rakhook); hooked = true end end)
+        _G.IsDesynced = true; _G.DesyncInProgress = false; return true
     end
+    
     local function ToggleManualDesync()
         if hooked then
             pcall(function() if raknet then raknet.remove_send_hook(rakhook) end end)
@@ -8239,12 +8266,15 @@ task.spawn(function()
         b.Activated:Connect(callback); return b
     end
     
+    -- Le bouton TP réveille le Main Hub
     local mTP = CreateMobBtn("TP", UDim2.new(0,0,0,0), Core.Theme.FireRed, function() 
         SimulateKey(Core.Keys.TP) 
     end)
+    -- Le bouton CLONE exécute directement la fonction pure
     local mCL = CreateMobBtn("CLONE", UDim2.new(0,0,0,60), Core.Theme.LavaLight, function() 
-        SimulateKey(Core.Keys.Clone) 
+        task.spawn(instantClone)
     end)
+    -- Le bouton RESET exécute ta méthode High Velocity
     local mRS = CreateMobBtn("RESET", UDim2.new(0,0,0,120), Color3.fromRGB(40,40,40), function() 
         local char = Core.Player.Character
         if char and char:FindFirstChild("HumanoidRootPart") then 
@@ -8465,7 +8495,7 @@ task.spawn(function()
         local d = Instance.new("TextLabel", c); d.Size = UDim2.new(1, -15, 0, 30); d.Position = UDim2.new(0, 10, 0, 30); d.BackgroundTransparency = 1; d.Text = desc; d.Font = Enum.Font.GothamMedium; d.TextColor3 = Core.Theme.Ash; d.TextSize = 12; d.TextXAlignment = Enum.TextXAlignment.Left; d.TextWrapped = true
     end
 
-    AddUpdateItem("📱 CLONE ANTI-KICK & CRASH FIX", "Rebuilt a safe, single-fire click system to ensure the clone teleports perfectly without getting you kicked or crashed.")
+    AddUpdateItem("📱 CLONE FULL FIX", "Restored the original instantClone function fully intact without any background clickers that cause crashes or kicks.")
     AddUpdateItem("⚙️ FAST RESET RESTORED", "Restored your original high-speed reset function (it works perfectly and is undetected).")
 
     local function ShowUpdateLog()
