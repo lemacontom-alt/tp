@@ -298,7 +298,7 @@ local function instantClone()
         local cloner = LocalPlayer.Backpack:FindFirstChild("Quantum Cloner") or char:FindFirstChild("Quantum Cloner")
         if not cloner then return end
 
-        -- 🛡️ LE VRAI FIX ANTI-CRASH : On vérifie s'il est déjà équipé avant de l'équiper !
+        -- 🛡️ FIX : On vérifie proprement avant d'équiper
         if cloner.Parent ~= char then
             hum:EquipTool(cloner)
             task.wait(0.1)
@@ -321,36 +321,20 @@ local function instantClone()
 
         task.wait(0.4) -- Délai Anti-Kick
 
-        -- 🚀 BYPASS RÉSEAU DIRECT
-        local successNet = false
-        pcall(function()
-            local net = game:GetService("ReplicatedStorage"):FindFirstChild("Packages")
-            if net then net = net:FindFirstChild("Net") end
-            if net then
-                for i, v in ipairs(net:GetChildren()) do
-                    if v.Name == "QuantumCloner/OnTeleport" then
-                        local remote = net:GetChildren()[i + 1]
-                        if remote and remote:IsA("RemoteEvent") then
-                            remote:FireServer()
-                            successNet = true
-                        end
-                        break
+        -- 🚀 CLIC PUR (Sans le Bypass Réseau qui faisait crash)
+        local qcFrame = LocalPlayer.PlayerGui:FindFirstChild("ToolsFrames") and LocalPlayer.PlayerGui.ToolsFrames:FindFirstChild("QuantumCloner")
+        local tpBtn = qcFrame and (qcFrame:FindFirstChild("change with clone") or qcFrame:FindFirstChild("TeleportToClone"))
+        
+        if tpBtn then
+            if firesignal then
+                pcall(function() firesignal(tpBtn.MouseButton1Up) end)
+                pcall(function() firesignal(tpBtn.MouseButton1Click) end)
+                pcall(function() firesignal(tpBtn.Activated) end)
+            elseif getconnections then
+                for _, sig in ipairs({"MouseButton1Up", "MouseButton1Click", "Activated"}) do
+                    for _, conn in ipairs(getconnections(tpBtn[sig])) do
+                        if type(conn.Function) == "function" then task.spawn(conn.Function) end
                     end
-                end
-            end
-        end)
-
-        -- 🛡️ PLAN B (Sans VIM)
-        if not successNet and firesignal then
-            local qcFrame = LocalPlayer.PlayerGui:FindFirstChild("ToolsFrames") and LocalPlayer.PlayerGui.ToolsFrames:FindFirstChild("QuantumCloner")
-            local tpBtn = qcFrame and (qcFrame:FindFirstChild("change with clone") or qcFrame:FindFirstChild("TeleportToClone"))
-            if tpBtn then firesignal(tpBtn.MouseButton1Up) end
-        elseif not successNet and getconnections then
-            local qcFrame = LocalPlayer.PlayerGui:FindFirstChild("ToolsFrames") and LocalPlayer.PlayerGui.ToolsFrames:FindFirstChild("QuantumCloner")
-            local tpBtn = qcFrame and (qcFrame:FindFirstChild("change with clone") or qcFrame:FindFirstChild("TeleportToClone"))
-            if tpBtn then
-                for _, conn in ipairs(getconnections(tpBtn.MouseButton1Up)) do
-                    if type(conn.Function) == "function" then task.spawn(conn.Function) end
                 end
             end
         end
@@ -3882,12 +3866,12 @@ local function runAutoSnipe()
     local exactPos = targetPart.Position
     local carpetName = Config.TpSettings.Tool
     local carpet = LocalPlayer.Backpack:FindFirstChild(carpetName) or char:FindFirstChild(carpetName)
-    local cloner = LocalPlayer.Backpack:FindFirstChild("Quantum Cloner") or char:FindFirstChild("Quantum Cloner")
 
- -- Le vrai fix qui empêche le crash SANS casser le tapis volant :
-if carpet and carpet.Parent ~= char then 
-    hum:EquipTool(carpet) 
-end
+    -- 🛡️ Sécurité Tapis : on équipe seulement s'il ne l'est pas déjà
+    if carpet and carpet.Parent ~= char then 
+        hum:EquipTool(carpet) 
+    end
+    
     task.wait(0.01)
     local isSecondFloor = exactPos.Y > 10
     local plotIndex = getClosestBaseIdx(exactPos)
@@ -3945,8 +3929,10 @@ end
     end
     task.wait(0.15)
 
-    -- 🛡️ FIX DU TAPIS 2 : On utilise Parent au lieu de EquipTool
-    if carpet and carpet.Parent ~= char then carpet.Parent = char end
+    -- 🛡️ Sécurité Tapis : on ré-équipe après le clone
+    if carpet and carpet.Parent ~= char then 
+        hum:EquipTool(carpet) 
+    end
 
     local verticalDiff = targetPart.Position.Y - hrp.Position.Y
 
@@ -7998,11 +7984,11 @@ task.spawn(function()
 end)
 
 -- ==========================================================
--- 🔥 SCRULI HUB - LAVA EDITION V23 (LETHAL 1:1 CLONE FIX) 🔥
+-- 🔥 SCRULI HUB - LAVA EDITION (FINAL MOBILE FIX) 🔥
 -- ==========================================================
 
 task.spawn(function()
-    local currentVersion = "V23"
+    local currentVersion = "FINAL_V24"
 
     -- 🎵 SATISFYING STARTUP SOUND
     local function PlayStartupSound()
@@ -8089,7 +8075,7 @@ task.spawn(function()
     end
 
     -- =========================================================
-    -- 🎯 LA FONCTION EXACTE DE LETHAL HUB (1:1 COPIE)
+    -- 🎯 LA FONCTION EXACTE DE CLONE ANTI-CRASH
     -- =========================================================
     local function instantClone()
         if _G.isCloning then return end
@@ -8098,60 +8084,71 @@ task.spawn(function()
         local ok, err = pcall(function()
             local char = Core.Player.Character
             local hum = char and char:FindFirstChildOfClass("Humanoid")
-            if not (char and hum) then error("No character") end
+            if not char or not hum then return end
 
             local cloner = Core.Player.Backpack:FindFirstChild("Quantum Cloner") or char:FindFirstChild("Quantum Cloner")
-            if not cloner then error("No Quantum Cloner") end
+            if not cloner then return end
 
-            pcall(function()
+            -- 🛡️ LE VRAI FIX ANTI-CRASH : On vérifie s'il est déjà équipé !
+            if cloner.Parent ~= char then
                 hum:EquipTool(cloner)
-            end)
-
-            task.wait(0.05)
+                task.wait(0.1)
+            end
 
             cloner:Activate()
             task.wait(0.05)
 
             local cloneName = tostring(Core.Player.UserId) .. "_Clone"
-            for _ = 1, 100 do
-                if workspace:FindFirstChild(cloneName) then break end
+            local found = false
+            for _ = 1, 60 do
+                if workspace:FindFirstChild(cloneName) then found = true; break end
                 task.wait(0.1)
             end
 
-            if not workspace:FindFirstChild(cloneName) then
-                error("")
+            if not found then 
+                hum:UnequipTools()
+                return 
             end
 
-            local toolsFrames = Core.Player.PlayerGui:FindFirstChild("ToolsFrames")
-            local qcFrame = toolsFrames and toolsFrames:FindFirstChild("QuantumCloner")
-            
-            -- Détection compatible avec Lethal + ton bouton
-            local tpButton = qcFrame and (qcFrame:FindFirstChild("TeleportToClone") or qcFrame:FindFirstChild("change with clone"))
-            if not tpButton and qcFrame then
-                for _, child in ipairs(qcFrame:GetChildren()) do
-                    if child:IsA("GuiButton") and string.find(string.lower(child.Name), "clone") then
-                        tpButton = child
-                        break
+            task.wait(0.4) -- Délai Anti-Kick
+
+            -- 🚀 BYPASS RÉSEAU DIRECT
+            local successNet = false
+            pcall(function()
+                local net = game:GetService("ReplicatedStorage"):FindFirstChild("Packages")
+                if net then net = net:FindFirstChild("Net") end
+                if net then
+                    for i, v in ipairs(net:GetChildren()) do
+                        if v.Name == "QuantumCloner/OnTeleport" then
+                            local remote = net:GetChildren()[i + 1]
+                            if remote and remote:IsA("RemoteEvent") then
+                                remote:FireServer()
+                                successNet = true
+                            end
+                            break
+                        end
+                    end
+                end
+            end)
+
+            -- 🛡️ PLAN B (Sans VIM)
+            if not successNet and firesignal then
+                local qcFrame = Core.Player.PlayerGui:FindFirstChild("ToolsFrames") and Core.Player.PlayerGui.ToolsFrames:FindFirstChild("QuantumCloner")
+                local tpBtn = qcFrame and (qcFrame:FindFirstChild("change with clone") or qcFrame:FindFirstChild("TeleportToClone"))
+                if tpBtn then firesignal(tpBtn.MouseButton1Up) end
+            elseif not successNet and getconnections then
+                local qcFrame = Core.Player.PlayerGui:FindFirstChild("ToolsFrames") and Core.Player.PlayerGui.ToolsFrames:FindFirstChild("QuantumCloner")
+                local tpBtn = qcFrame and (qcFrame:FindFirstChild("change with clone") or qcFrame:FindFirstChild("TeleportToClone"))
+                if tpBtn then
+                    for _, conn in ipairs(getconnections(tpBtn.MouseButton1Up)) do
+                        if type(conn.Function) == "function" then task.spawn(conn.Function) end
                     end
                 end
             end
-
-            if not tpButton then error("Teleport button missing") end
-
-            tpButton.Visible = true
-
-            -- LA MAGIE DE LETHAL HUB : UTILISER DIRECTEMENT FIRESIGNAL (SANS L'AVOIR SUPPRIMÉ AVANT !)
-            if firesignal then
-                firesignal(tpButton.MouseButton1Up)
-            else
-                local vim = cloneref and cloneref(game:GetService("VirtualInputManager")) or game:GetService("VirtualInputManager")
-                local inset = (cloneref and cloneref(game:GetService("GuiService")) or game:GetService("GuiService")):GetGuiInset()
-                local pos = tpButton.AbsolutePosition + (tpButton.AbsoluteSize / 2) + inset
-
-                vim:SendMouseButtonEvent(pos.X, pos.Y, 0, true, game, 1)
-                task.wait()
-                vim:SendMouseButtonEvent(pos.X, pos.Y, 0, false, game, 1)
-            end
+            
+            task.wait(0.2)
+            hum:UnequipTools()
+            pcall(function() Core.Player.PlayerGui.ToolsFrames.QuantumCloner.Visible = false end)
         end)
 
         _G.isCloning = false
