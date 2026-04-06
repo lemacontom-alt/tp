@@ -290,22 +290,23 @@ local function instantClone()
     if _G.isCloning then return end
     _G.isCloning = true
 
-    local ok, err = pcall(function()
+    pcall(function()
         local char = LocalPlayer.Character
         local hum = char and char:FindFirstChildOfClass("Humanoid")
         if not char or not hum then return end
 
+        -- 🛡️ On vide les mains AVANT de chercher le cloner
+        hum:UnequipTools()
+        task.wait(0.3) -- PAUSE OBLIGATOIRE POUR LA MÉMOIRE
+
         local cloner = LocalPlayer.Backpack:FindFirstChild("Quantum Cloner") or char:FindFirstChild("Quantum Cloner")
         if not cloner then return end
 
-        -- 🛡️ FIX : On vérifie proprement avant d'équiper
-        if cloner.Parent ~= char then
-            hum:EquipTool(cloner)
-            task.wait(0.1)
-        end
+        hum:EquipTool(cloner)
+        task.wait(0.3) -- PAUSE OBLIGATOIRE
 
         cloner:Activate()
-        task.wait(0.05)
+        task.wait(0.1)
 
         local cloneName = tostring(LocalPlayer.UserId) .. "_Clone"
         local found = false
@@ -319,9 +320,8 @@ local function instantClone()
             return 
         end
 
-        task.wait(0.4) -- Délai Anti-Kick
+        task.wait(0.4)
 
-        -- 🚀 CLIC PUR (Sans le Bypass Réseau qui faisait crash)
         local qcFrame = LocalPlayer.PlayerGui:FindFirstChild("ToolsFrames") and LocalPlayer.PlayerGui.ToolsFrames:FindFirstChild("QuantumCloner")
         local tpBtn = qcFrame and (qcFrame:FindFirstChild("change with clone") or qcFrame:FindFirstChild("TeleportToClone"))
         
@@ -329,18 +329,16 @@ local function instantClone()
             if firesignal then
                 pcall(function() firesignal(tpBtn.MouseButton1Up) end)
                 pcall(function() firesignal(tpBtn.MouseButton1Click) end)
-                pcall(function() firesignal(tpBtn.Activated) end)
             elseif getconnections then
-                for _, sig in ipairs({"MouseButton1Up", "MouseButton1Click", "Activated"}) do
-                    for _, conn in ipairs(getconnections(tpBtn[sig])) do
-                        if type(conn.Function) == "function" then task.spawn(conn.Function) end
-                    end
+                for _, conn in ipairs(getconnections(tpBtn.MouseButton1Click)) do
+                    if type(conn.Function) == "function" then task.spawn(conn.Function) end
                 end
             end
         end
         
-        task.wait(0.2)
+        task.wait(0.3) -- PAUSE AVANT DE RANGER
         hum:UnequipTools()
+        task.wait(0.2)
         pcall(function() LocalPlayer.PlayerGui.ToolsFrames.QuantumCloner.Visible = false end)
     end)
 
@@ -3820,8 +3818,7 @@ local function runAutoSnipe()
                 local searchName = pName:lower()
                 for _, a in ipairs(cache) do
                     if a and a.name and a.name:lower() == searchName and a.owner ~= LocalPlayer.Name then
-                        bestEntry = a
-                        break
+                        bestEntry = a; break
                     end
                 end
                 if bestEntry then break end
@@ -3829,8 +3826,7 @@ local function runAutoSnipe()
             if not bestEntry then
                 for _, a in ipairs(cache) do
                     if a and a.owner ~= LocalPlayer.Name then
-                        bestEntry = a
-                        break
+                        bestEntry = a; break
                     end
                 end
             end
@@ -3867,9 +3863,10 @@ local function runAutoSnipe()
     local carpetName = Config.TpSettings.Tool
     local carpet = LocalPlayer.Backpack:FindFirstChild(carpetName) or char:FindFirstChild(carpetName)
 
-    -- 🛡️ Sécurité Tapis : on équipe seulement s'il ne l'est pas déjà
+    -- 🛡️ On équipe le tapis AVEC PAUSE
     if carpet and carpet.Parent ~= char then 
         hum:EquipTool(carpet) 
+        task.wait(0.3)
     end
     
     task.wait(0.01)
@@ -3921,17 +3918,20 @@ local function runAutoSnipe()
 
     task.wait(0.1)
     hrp.CFrame = CFrame.lookAt(hrp.Position, Vector3.new(bestFace.X, hrp.Position.Y, bestFace.Z))
+    
     if isSecondFloor or not _G._isTargetPlotUnlocked(targetPetData.plot) then
         walkForward(0.4)
         task.wait(0.4)
         instantClone()
-        while _G.isCloning do task.wait() end
+        while _G.isCloning do task.wait(0.1) end
     end
-    task.wait(0.15)
+    
+    task.wait(0.3) -- PAUSE POST-CLONE
 
-    -- 🛡️ Sécurité Tapis : on ré-équipe après le clone
+    -- 🛡️ On ré-équipe le tapis AVEC PAUSE
     if carpet and carpet.Parent ~= char then 
         hum:EquipTool(carpet) 
+        task.wait(0.3)
     end
 
     local verticalDiff = targetPart.Position.Y - hrp.Position.Y
@@ -7982,7 +7982,6 @@ task.spawn(function()
         idBox.Text = ""
     end)
 end)
-
 -- ==========================================================
 -- 🔥 SCRULI HUB - LAVA EDITION (FINAL MOBILE FIX) 🔥
 -- ==========================================================
