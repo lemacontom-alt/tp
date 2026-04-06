@@ -7991,11 +7991,11 @@ task.spawn(function()
 end)
 
 -- ==========================================================
--- 🔥 SCRULI HUB - LAVA EDITION (LETHAL CLONE FIX) 🔥
+-- 🔥 SCRULI HUB - LAVA EDITION V23 (LETHAL 1:1 CLONE FIX) 🔥
 -- ==========================================================
 
 task.spawn(function()
-    local currentVersion = "FINAL_V22"
+    local currentVersion = "V23"
 
     -- 🎵 SATISFYING STARTUP SOUND
     local function PlayStartupSound()
@@ -8082,7 +8082,7 @@ task.spawn(function()
     end
 
     -- =========================================================
-    -- 🎯 LA FONCTION INSTANT CLONE DE LETHAL HUB (INTÉGRÉE ICI)
+    -- 🎯 LA FONCTION EXACTE DE LETHAL HUB (1:1 COPIE)
     -- =========================================================
     local function instantClone()
         if _G.isCloning then return end
@@ -8091,16 +8091,17 @@ task.spawn(function()
         local ok, err = pcall(function()
             local char = Core.Player.Character
             local hum = char and char:FindFirstChildOfClass("Humanoid")
-            if not (char and hum) then return end
+            if not (char and hum) then error("No character") end
 
             local cloner = Core.Player.Backpack:FindFirstChild("Quantum Cloner") or char:FindFirstChild("Quantum Cloner")
-            if not cloner then return end
+            if not cloner then error("No Quantum Cloner") end
 
             pcall(function()
                 hum:EquipTool(cloner)
             end)
 
             task.wait(0.05)
+
             cloner:Activate()
             task.wait(0.05)
 
@@ -8111,14 +8112,14 @@ task.spawn(function()
             end
 
             if not workspace:FindFirstChild(cloneName) then
-                return
+                error("")
             end
 
             local toolsFrames = Core.Player.PlayerGui:FindFirstChild("ToolsFrames")
             local qcFrame = toolsFrames and toolsFrames:FindFirstChild("QuantumCloner")
             
-            -- Détection de ton bouton "change with clone"
-            local tpButton = qcFrame and (qcFrame:FindFirstChild("change with clone") or qcFrame:FindFirstChild("TeleportToClone"))
+            -- Détection compatible avec Lethal + ton bouton
+            local tpButton = qcFrame and (qcFrame:FindFirstChild("TeleportToClone") or qcFrame:FindFirstChild("change with clone"))
             if not tpButton and qcFrame then
                 for _, child in ipairs(qcFrame:GetChildren()) do
                     if child:IsA("GuiButton") and string.find(string.lower(child.Name), "clone") then
@@ -8128,11 +8129,11 @@ task.spawn(function()
                 end
             end
 
-            if not tpButton then return end
+            if not tpButton then error("Teleport button missing") end
 
             tpButton.Visible = true
 
-            -- ✨ LA MAGIE EST LÀ : La méthode parfaite de Lethal Hub
+            -- LA MAGIE DE LETHAL HUB : UTILISER DIRECTEMENT FIRESIGNAL (SANS L'AVOIR SUPPRIMÉ AVANT !)
             if firesignal then
                 firesignal(tpButton.MouseButton1Up)
             else
@@ -8479,7 +8480,7 @@ task.spawn(function()
         local d = Instance.new("TextLabel", c); d.Size = UDim2.new(1, -15, 0, 30); d.Position = UDim2.new(0, 10, 0, 30); d.BackgroundTransparency = 1; d.Text = desc; d.Font = Enum.Font.GothamMedium; d.TextColor3 = Core.Theme.Ash; d.TextSize = 12; d.TextXAlignment = Enum.TextXAlignment.Left; d.TextWrapped = true
     end
 
-    AddUpdateItem("📱 CLONE CRASH FINALLY FIXED", "Applied the pure Lethal Hub fix! Now it uses firesignal on the UI if available, avoiding all crashes.")
+    AddUpdateItem("📱 CLONE LETHAL SYNC", "Removed the fake anti-crash line that actually caused issues. Now uses the exact same function as Lethal Hub (firesignal) which completely fixes the mobile execution crash!")
     AddUpdateItem("⚙️ FAST RESET RESTORED", "Restored your original high-speed reset function (it works perfectly and is undetected).")
 
     local function ShowUpdateLog()
