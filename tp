@@ -3881,7 +3881,7 @@ local function runAutoSnipe()
     local carpet = LocalPlayer.Backpack:FindFirstChild(carpetName) or char:FindFirstChild(carpetName)
     local cloner = LocalPlayer.Backpack:FindFirstChild("Quantum Cloner") or char:FindFirstChild("Quantum Cloner")
 
-    if carpet then carpet.Parent = char end
+    if carpet then hum:EquipTool(carpet) end
     task.wait(0.01)
     local isSecondFloor = exactPos.Y > 10
     local plotIndex = getClosestBaseIdx(exactPos)
@@ -3939,7 +3939,7 @@ local function runAutoSnipe()
     end
     task.wait(0.15)
 
-    if carpet then carpet.Parent = char end end
+    if carpet then hum:EquipTool(carpet) end
 
     local verticalDiff = targetPart.Position.Y - hrp.Position.Y
 
