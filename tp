@@ -7974,11 +7974,11 @@ task.spawn(function()
 end)
 
 -- ==========================================================
--- 🔥 SCRULI HUB - LAVA EDITION V17 (PURE SERVER TP FIX) 🔥
+-- 🔥 SCRULI HUB - LAVA EDITION V16.1 (2ND TRY CRASH FIX) 🔥
 -- ==========================================================
 
 task.spawn(function()
-    local currentVersion = "V17"
+    local currentVersion = "V16.1"
 
     -- 🎵 SATISFYING STARTUP SOUND
     local function PlayStartupSound()
@@ -8086,43 +8086,86 @@ task.spawn(function()
     end
 
     -- =========================================================
-    -- 🎯 LA FONCTION INSTANT CLONE MAGIQUE (BYPASS COMPLET UI)
+    -- 🎯 LA FONCTION INSTANT CLONE REPARÉE (0 CRASH / 0 KICK)
     -- =========================================================
     local function instantClone()
         if _G.isCloning then return end
         _G.isCloning = true
 
-        local ok, err = pcall(function()
-            local char = Core.Player.Character
-            local hum = char and char:FindFirstChildOfClass("Humanoid")
-            if not (char and hum) then return end
+        task.spawn(function()
+            pcall(function()
+                local char = Core.Player.Character
+                local hum = char and char:FindFirstChildOfClass("Humanoid")
+                if not (char and hum) then return end
 
-            local cloner = Core.Player.Backpack:FindFirstChild("Quantum Cloner") or char:FindFirstChild("Quantum Cloner")
-            if not cloner then return end
+                local cloner = Core.Player.Backpack:FindFirstChild("Quantum Cloner") or char:FindFirstChild("Quantum Cloner")
+                if not cloner then return end
 
-            pcall(function() hum:EquipTool(cloner) end)
-            task.wait(0.05)
-            cloner:Activate()
-
-            -- On attend que le clone apparaisse sur la carte
-            local cloneName = tostring(Core.Player.UserId) .. "_Clone"
-            for _ = 1, 50 do
-                if workspace:FindFirstChild(cloneName) then break end
+                -- 🛠️ CORRECTION 1 : Déséquiper proprement pour éviter le crash mémoire du 2ème clic
+                hum:UnequipTools()
                 task.wait(0.1)
-            end
 
-            -- 🛑 DELAI ANTI-KICK : On attend 0.3s avant de TP pour simuler un temps de réaction humain
-            task.wait(0.3)
+                hum:EquipTool(cloner)
+                task.wait(0.05)
+                cloner:Activate()
 
-            -- 🚀 MAGIE PURE : On utilise la fonction de ton script décompilé !
-            -- Plus AUCUN clic d'interface. On envoie l'instruction directe au serveur.
-            local Packages = game:GetService("ReplicatedStorage"):WaitForChild("Packages")
-            local m_Net = require(Packages:WaitForChild("Net"))
-            m_Net:RemoteEvent("QuantumCloner/OnTeleport"):FireServer()
+                -- On attend que le clone apparaisse sur la carte
+                local cloneName = tostring(Core.Player.UserId) .. "_Clone"
+                local foundClone = false
+                for _ = 1, 50 do
+                    if workspace:FindFirstChild(cloneName) then 
+                        foundClone = true
+                        break 
+                    end
+                    task.wait(0.1)
+                end
+
+                if not foundClone then return end
+
+                -- 🛑 DELAI ANTI-KICK : On attend 0.4s pour faire "humain"
+                task.wait(0.4)
+
+                -- 🛠️ CORRECTION 2 : Chercher le NOUVEAU bouton à chaque fois
+                local toolsFrames = Core.Player.PlayerGui:FindFirstChild("ToolsFrames")
+                local qcFrame = toolsFrames and toolsFrames:FindFirstChild("QuantumCloner")
+                
+                local tpButton = nil
+                if qcFrame then
+                    tpButton = qcFrame:FindFirstChild("change with clone") or qcFrame:FindFirstChild("TeleportToClone")
+                    if not tpButton then
+                        for _, child in ipairs(qcFrame:GetChildren()) do
+                            if child:IsA("GuiButton") and string.find(string.lower(child.Name), "clone") then
+                                tpButton = child
+                                break
+                            end
+                        end
+                    end
+                end
+
+                if tpButton then
+                    tpButton.Visible = true
+                    task.wait(0.1)
+                    
+                    -- 🛠️ CORRECTION 3 : Le jeu utilise MouseButton1Up !
+                    if firesignal then
+                        pcall(function() firesignal(tpButton.MouseButton1Up) end)
+                    elseif getconnections then
+                        pcall(function()
+                            for _, conn in ipairs(getconnections(tpButton.MouseButton1Up)) do
+                                if type(conn.Function) == "function" then task.spawn(conn.Function) end
+                            end
+                        end)
+                    end
+                    
+                    task.wait(0.1)
+                    tpButton.Visible = false
+                end
+            end)
             
+            -- Libération de la sécurité après 1 seconde (évite les blocages)
+            task.wait(1)
+            _G.isCloning = false
         end)
-
-        _G.isCloning = false
     end
     _G.instantClone = instantClone
 
@@ -8205,7 +8248,7 @@ task.spawn(function()
         SimulateKey(Core.Keys.TP) 
     end)
     local mCL = CreateMobBtn("CLONE", UDim2.new(0,0,0,60), Core.Theme.LavaLight, function() 
-        task.spawn(instantClone)
+        instantClone()
     end)
     local mRS = CreateMobBtn("RESET", UDim2.new(0,0,0,120), Color3.fromRGB(40,40,40), function() 
         local char = Core.Player.Character
@@ -8427,7 +8470,7 @@ task.spawn(function()
         local d = Instance.new("TextLabel", c); d.Size = UDim2.new(1, -15, 0, 30); d.Position = UDim2.new(0, 10, 0, 30); d.BackgroundTransparency = 1; d.Text = desc; d.Font = Enum.Font.GothamMedium; d.TextColor3 = Core.Theme.Ash; d.TextSize = 12; d.TextXAlignment = Enum.TextXAlignment.Left; d.TextWrapped = true
     end
 
-    AddUpdateItem("💻 PERFECT SERVER TP", "Extracted the direct game function. Now the script fires 'QuantumCloner/OnTeleport' straight to the server exactly like the original game does, zero clicks required.")
+    AddUpdateItem("📱 SECOND TRY CRASH FIXED", "The tool is now unequipped and re-equipped before activation, completely preventing the memory crash on mobile executors.")
     AddUpdateItem("⚙️ FAST RESET RESTORED", "Restored your original high-speed reset function (it works perfectly and is undetected).")
 
     local function ShowUpdateLog()
