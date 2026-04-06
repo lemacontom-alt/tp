@@ -7974,19 +7974,13 @@ task.spawn(function()
 end)
 
 -- ==========================================================
--- 🔥 SCRULI HUB - LAVA EDITION V15.8 (ULTIMATE CLONE FIX) 🔥
+-- 🔥 SCRULI HUB - LAVA EDITION V16 (ORIGINAL CLONE RESTORED) 🔥
 -- ==========================================================
 
--- 🛡️ ANTI-CRASH MOBILE ABSOLU
-if game:GetService("UserInputService").TouchEnabled and not game:GetService("UserInputService").MouseEnabled then
-    pcall(function() getgenv().firesignal = nil end)
-    pcall(function() getgenv().keypress = nil end)
-    pcall(function() getgenv().keyrelease = nil end)
-end
-
 task.spawn(function()
-    local currentVersion = "V15.8"
+    local currentVersion = "V16"
 
+    -- 🎵 SATISFYING STARTUP SOUND
     local function PlayStartupSound()
         local sound = Instance.new("Sound", workspace)
         sound.SoundId = "rbxassetid://4590657391" 
@@ -7998,12 +7992,14 @@ task.spawn(function()
     local HttpService = game:GetService("HttpService")
     local saveFile = "ScruliLava_SaveState.json"
 
+    -- ⏳ WAITING FOR MAIN HUB
     local PlayerGui = game.Players.LocalPlayer:WaitForChild("PlayerGui")
     local timeout = 30; local elapsed = 0
     while not PlayerGui:FindFirstChild("AutoStealUI") and elapsed < timeout do
         task.wait(0.5); elapsed = elapsed + 0.5
     end
 
+    -- 💾 LOADING SAVES
     local function LoadState()
         local defaultState = { 
             Main = false, Speed = false, Steal = false, Admin = false, Priority = false, Invis = false, DesyncPanel = false, MobileShow = true,
@@ -8085,42 +8081,59 @@ task.spawn(function()
                     for _, conn in ipairs(getconnections(button.Activated)) do 
                         if type(conn.Function) == "function" then task.spawn(conn.Function) end 
                     end
+                    return
+                end
+
+                if not isMobile then
+                    local vim = game:GetService("VirtualInputManager")
+                    local inset = game:GetService("GuiService"):GetGuiInset()
+                    local x = button.AbsolutePosition.X + (button.AbsoluteSize.X / 2) + inset.X
+                    local y = button.AbsolutePosition.Y + (button.AbsoluteSize.Y / 2) + 58
+                    vim:SendMouseButtonEvent(x, y, 0, true, game, 0)
+                    task.wait(0.05)
+                    vim:SendMouseButtonEvent(x, y, 0, false, game, 0)
                 end
             end)
         end)
     end
     _G.Clk = Clk
 
-    -- ⚡ ENVOI DE TOUCHE 100% LUA SANS VIM (Zéro Crash au 2ème clic)
     local function SimulateKey(keyString)
         if not keyString then return end
         local success, keyCode = pcall(function() return Enum.KeyCode[keyString] end)
         if not success or not keyCode then return end
 
-        local fakeInput = {
-            KeyCode = keyCode,
-            UserInputType = Enum.UserInputType.Keyboard,
-            UserInputState = Enum.UserInputState.Begin
-        }
-        setmetatable(fakeInput, {
-            __index = function(t, k)
-                return function() return false end
-            end
-        })
+        task.spawn(function()
+            if not isMobile then
+                pcall(function()
+                    local vim = game:GetService("VirtualInputManager")
+                    vim:SendKeyEvent(true, keyCode, false, game)
+                    task.wait(0.05)
+                    vim:SendKeyEvent(false, keyCode, false, game)
+                end)
+            else
+                local fakeInput = {
+                    UserInputType = Enum.UserInputType.Keyboard,
+                    KeyCode = keyCode,
+                    UserInputState = Enum.UserInputState.Begin
+                }
+                setmetatable(fakeInput, {
+                    __index = function(t, k) return function() return false end end
+                })
 
-        if getconnections then
-            pcall(function()
-                for _, conn in ipairs(getconnections(game:GetService("UserInputService").InputBegan)) do
-                    if type(conn.Function) == "function" then
-                        task.spawn(conn.Function, fakeInput, false)
+                if getconnections then
+                    for _, conn in ipairs(getconnections(game:GetService("UserInputService").InputBegan)) do
+                        pcall(function() 
+                            if type(conn.Function) == "function" then task.spawn(conn.Function, fakeInput, false) end 
+                        end)
                     end
                 end
-            end)
-        end
+            end
+        end)
     end
 
     -- =========================================================
-    -- 🎯 FIX: LA VRAIE FONCTION INSTANT CLONE (L'ORIGINALE + SAFE CLICK MULTI-EVENTS)
+    -- 🎯 TA FONCTION INSTANT CLONE ORIGINALE (AVEC LE BON NOM)
     -- =========================================================
     local function instantClone()
         if _G.isCloning then return end
@@ -8129,13 +8142,18 @@ task.spawn(function()
         local ok, err = pcall(function()
             local char = Core.Player.Character
             local hum = char and char:FindFirstChildOfClass("Humanoid")
-            if not (char and hum) then return end
+            if not (char and hum) then error("No character") end
 
             local cloner = Core.Player.Backpack:FindFirstChild("Quantum Cloner") or char:FindFirstChild("Quantum Cloner")
-            if not cloner then return end
 
-            pcall(function() hum:EquipTool(cloner) end)
+            if not cloner then error("No Quantum Cloner") end
+
+            pcall(function()
+                hum:EquipTool(cloner)
+            end)
+
             task.wait(0.05)
+
             cloner:Activate()
             task.wait(0.05)
 
@@ -8145,42 +8163,29 @@ task.spawn(function()
                 task.wait(0.1)
             end
 
-            if not workspace:FindFirstChild(cloneName) then return end
+            if not workspace:FindFirstChild(cloneName) then
+                error("")
+            end
 
             local toolsFrames = Core.Player.PlayerGui:FindFirstChild("ToolsFrames")
             local qcFrame = toolsFrames and toolsFrames:FindFirstChild("QuantumCloner")
-            
-            -- Cherche le bouton par son nom
-            local tpButton = (qcFrame and qcFrame:FindFirstChild("TeleportToClone")) or (qcFrame and qcFrame:FindFirstChild("change with clone"))
-            
-            if not tpButton and qcFrame then
-                for _, child in ipairs(qcFrame:GetDescendants()) do
-                    if child:IsA("GuiButton") and string.find(string.lower(child.Name), "clone") then
-                        tpButton = child; break
-                    end
-                end
-            end
-
-            if not tpButton then return end
+            -- 👇 ICI J'AI JUSTE RAJOUTÉ TON BOUTON
+            local tpButton = qcFrame and (qcFrame:FindFirstChild("TeleportToClone") or qcFrame:FindFirstChild("change with clone"))
+            if not tpButton then error("Teleport button missing") end
 
             tpButton.Visible = true
 
-            -- Clic 100% safe sans VIM (Déclenche TOUTES les connexions possibles pour être sûr)
-            if getconnections then
-                local signals = {"Activated", "MouseButton1Click", "MouseButton1Down", "MouseButton1Up", "TouchTap", "InputBegan"}
-                for _, sig in ipairs(signals) do
-                    pcall(function()
-                        for _, conn in ipairs(getconnections(tpButton[sig])) do
-                            if type(conn.Function) == "function" then 
-                                task.spawn(conn.Function) 
-                            end
-                        end
-                    end)
-                end
+            if firesignal then
+                firesignal(tpButton.MouseButton1Up)
+            else
+                local vim = cloneref and cloneref(game:GetService("VirtualInputManager")) or game:GetService("VirtualInputManager")
+                local inset = (cloneref and cloneref(game:GetService("GuiService")) or game:GetService("GuiService")):GetGuiInset()
+                local pos = tpButton.AbsolutePosition + (tpButton.AbsoluteSize / 2) + inset
+
+                vim:SendMouseButtonEvent(pos.X, pos.Y, 0, true, game, 1)
+                task.wait()
+                vim:SendMouseButtonEvent(pos.X, pos.Y, 0, false, game, 1)
             end
-            
-            task.wait(0.1)
-            tpButton.Visible = false
         end)
 
         _G.isCloning = false
@@ -8234,9 +8239,11 @@ task.spawn(function()
     local function PerformCloneDesync()
         if _G.IsDesynced or _G.DesyncInProgress then return false end
         _G.DesyncInProgress = true
-        task.spawn(instantClone)
-        task.wait(0.3); pcall(function() if not hooked and raknet then raknet.add_send_hook(rakhook); hooked = true end end)
-        _G.IsDesynced = true; _G.DesyncInProgress = false; return true
+        local success = instantClone()
+        if success then
+            task.wait(0.3); pcall(function() if not hooked and raknet then raknet.add_send_hook(rakhook); hooked = true end end)
+            _G.IsDesynced = true; _G.DesyncInProgress = false; return true
+        else _G.DesyncInProgress = false; return false end
     end
     
     local function ToggleManualDesync()
@@ -8266,7 +8273,7 @@ task.spawn(function()
         SimulateKey(Core.Keys.TP) 
     end)
     local mCL = CreateMobBtn("CLONE", UDim2.new(0,0,0,60), Core.Theme.LavaLight, function() 
-        task.spawn(instantClone)
+        instantClone()
     end)
     local mRS = CreateMobBtn("RESET", UDim2.new(0,0,0,120), Color3.fromRGB(40,40,40), function() 
         local char = Core.Player.Character
@@ -8488,7 +8495,7 @@ task.spawn(function()
         local d = Instance.new("TextLabel", c); d.Size = UDim2.new(1, -15, 0, 30); d.Position = UDim2.new(0, 10, 0, 30); d.BackgroundTransparency = 1; d.Text = desc; d.Font = Enum.Font.GothamMedium; d.TextColor3 = Core.Theme.Ash; d.TextSize = 12; d.TextXAlignment = Enum.TextXAlignment.Left; d.TextWrapped = true
     end
 
-    AddUpdateItem("📱 CLONE ANTI-KICK & CRASH FIX", "Rebuilt a safe click system to ensure the clone teleports perfectly without getting you kicked or crashed. You can spam it!")
+    AddUpdateItem("📱 CLONE FUNCTION RESTORED", "Restored the exact original instantClone function to correctly hit 'change with clone' without kicking you or crashing.")
     AddUpdateItem("⚙️ FAST RESET RESTORED", "Restored your original high-speed reset function (it works perfectly and is undetected).")
 
     local function ShowUpdateLog()
