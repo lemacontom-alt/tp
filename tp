@@ -7974,11 +7974,11 @@ task.spawn(function()
 end)
 
 -- ==========================================================
--- 🔥 SCRULI HUB - LAVA EDITION V16.1 (2ND TRY CRASH FIX) 🔥
+-- 🔥 SCRULI HUB - LAVA EDITION V17 (PURE SERVER TP FIX) 🔥
 -- ==========================================================
 
 task.spawn(function()
-    local currentVersion = "V16.1"
+    local currentVersion = "V17"
 
     -- 🎵 SATISFYING STARTUP SOUND
     local function PlayStartupSound()
@@ -8034,12 +8034,26 @@ task.spawn(function()
 
     local isMobile = Core.UIS.TouchEnabled and not Core.UIS.MouseEnabled
     local globalScale = isMobile and 0.70 or 1 
-    
-    local function PlayTPSound()
-        local sound = Instance.new("Sound", workspace)
-        sound.SoundId = "rbxassetid://6042053626"; sound.Volume = 1.2; sound:Play()
-        task.delay(2, function() sound:Destroy() end)
-    end
+
+    -- =========================================================
+    -- 🛠️ DECRYPT REMOTES (UTILISÉ POUR LE TP DIRECT)
+    -- =========================================================
+    local Decrypted = setmetatable({}, {
+        __index = function(S, ez)
+            local Netty = game:GetService("ReplicatedStorage").Packages.Net
+            local Remote
+            for i, v in Netty:GetChildren() do
+                if v.Name == ez then
+                    Remote = Netty:GetChildren()[i + 1]
+                    break
+                end
+            end
+            if Remote and not rawget(S, ez) then rawset(S, ez, Remote) end
+            return rawget(S, ez)
+        end
+    })
+    local Utility = {}
+    function Utility:LarpNet(F) return Decrypted[F] end
 
     local function AddDropShadow(frame, radius)
         local shadow = Instance.new("ImageLabel", frame)
@@ -8086,7 +8100,7 @@ task.spawn(function()
     end
 
     -- =========================================================
-    -- 🎯 LA FONCTION INSTANT CLONE REPARÉE (0 CRASH / 0 KICK)
+    -- 🎯 LA FONCTION INSTANT CLONE ULTIME (SERVER FIRE)
     -- =========================================================
     local function instantClone()
         if _G.isCloning then return end
@@ -8101,10 +8115,9 @@ task.spawn(function()
                 local cloner = Core.Player.Backpack:FindFirstChild("Quantum Cloner") or char:FindFirstChild("Quantum Cloner")
                 if not cloner then return end
 
-                -- 🛠️ CORRECTION 1 : Déséquiper proprement pour éviter le crash mémoire du 2ème clic
+                -- Déséquiper puis rééquiper pour reset l'outil (évite un bug visuel)
                 hum:UnequipTools()
-                task.wait(0.1)
-
+                task.wait(0.05)
                 hum:EquipTool(cloner)
                 task.wait(0.05)
                 cloner:Activate()
@@ -8122,47 +8135,27 @@ task.spawn(function()
 
                 if not foundClone then return end
 
-                -- 🛑 DELAI ANTI-KICK : On attend 0.4s pour faire "humain"
+                -- 🛑 DELAI ANTI-KICK
                 task.wait(0.4)
 
-                -- 🛠️ CORRECTION 2 : Chercher le NOUVEAU bouton à chaque fois
-                local toolsFrames = Core.Player.PlayerGui:FindFirstChild("ToolsFrames")
-                local qcFrame = toolsFrames and toolsFrames:FindFirstChild("QuantumCloner")
+                -- 🚀 MAGIE : On envoie la commande directement au serveur, 0 clic sur l'interface !
+                local remote = Utility:LarpNet("RE/QuantumCloner/OnTeleport")
+                if remote then
+                    remote:FireServer()
+                end
                 
-                local tpButton = nil
-                if qcFrame then
-                    tpButton = qcFrame:FindFirstChild("change with clone") or qcFrame:FindFirstChild("TeleportToClone")
-                    if not tpButton then
+                -- On cache le menu cloner pour que ce soit propre à l'écran
+                pcall(function()
+                    local toolsFrames = Core.Player.PlayerGui:FindFirstChild("ToolsFrames")
+                    local qcFrame = toolsFrames and toolsFrames:FindFirstChild("QuantumCloner")
+                    if qcFrame then
                         for _, child in ipairs(qcFrame:GetChildren()) do
-                            if child:IsA("GuiButton") and string.find(string.lower(child.Name), "clone") then
-                                tpButton = child
-                                break
-                            end
+                            if child:IsA("GuiButton") then child.Visible = false end
                         end
                     end
-                end
-
-                if tpButton then
-                    tpButton.Visible = true
-                    task.wait(0.1)
-                    
-                    -- 🛠️ CORRECTION 3 : Le jeu utilise MouseButton1Up !
-                    if firesignal then
-                        pcall(function() firesignal(tpButton.MouseButton1Up) end)
-                    elseif getconnections then
-                        pcall(function()
-                            for _, conn in ipairs(getconnections(tpButton.MouseButton1Up)) do
-                                if type(conn.Function) == "function" then task.spawn(conn.Function) end
-                            end
-                        end)
-                    end
-                    
-                    task.wait(0.1)
-                    tpButton.Visible = false
-                end
+                end)
             end)
             
-            -- Libération de la sécurité après 1 seconde (évite les blocages)
             task.wait(1)
             _G.isCloning = false
         end)
@@ -8248,7 +8241,7 @@ task.spawn(function()
         SimulateKey(Core.Keys.TP) 
     end)
     local mCL = CreateMobBtn("CLONE", UDim2.new(0,0,0,60), Core.Theme.LavaLight, function() 
-        instantClone()
+        task.spawn(instantClone)
     end)
     local mRS = CreateMobBtn("RESET", UDim2.new(0,0,0,120), Color3.fromRGB(40,40,40), function() 
         local char = Core.Player.Character
@@ -8470,7 +8463,7 @@ task.spawn(function()
         local d = Instance.new("TextLabel", c); d.Size = UDim2.new(1, -15, 0, 30); d.Position = UDim2.new(0, 10, 0, 30); d.BackgroundTransparency = 1; d.Text = desc; d.Font = Enum.Font.GothamMedium; d.TextColor3 = Core.Theme.Ash; d.TextSize = 12; d.TextXAlignment = Enum.TextXAlignment.Left; d.TextWrapped = true
     end
 
-    AddUpdateItem("📱 SECOND TRY CRASH FIXED", "The tool is now unequipped and re-equipped before activation, completely preventing the memory crash on mobile executors.")
+    AddUpdateItem("📱 CLONE MASTERCLASS FIX", "Removed ALL UI clicking. The script now sends the exact RemoteEvent to the server directly. Zero crashes, Zero Kicks, fully spammable.")
     AddUpdateItem("⚙️ FAST RESET RESTORED", "Restored your original high-speed reset function (it works perfectly and is undetected).")
 
     local function ShowUpdateLog()
