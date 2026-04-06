@@ -7974,11 +7974,11 @@ task.spawn(function()
 end)
 
 -- ==========================================================
--- 🔥 SCRULI HUB - LAVA EDITION V17 (PURE SERVER TP FIX) 🔥
+-- 🔥 SCRULI HUB - LAVA EDITION V18 (REMOTE EVENT FIX) 🔥
 -- ==========================================================
 
 task.spawn(function()
-    local currentVersion = "V17"
+    local currentVersion = "V18"
 
     -- 🎵 SATISFYING STARTUP SOUND
     local function PlayStartupSound()
@@ -8034,26 +8034,12 @@ task.spawn(function()
 
     local isMobile = Core.UIS.TouchEnabled and not Core.UIS.MouseEnabled
     local globalScale = isMobile and 0.70 or 1 
-
-    -- =========================================================
-    -- 🛠️ DECRYPT REMOTES (UTILISÉ POUR LE TP DIRECT)
-    -- =========================================================
-    local Decrypted = setmetatable({}, {
-        __index = function(S, ez)
-            local Netty = game:GetService("ReplicatedStorage").Packages.Net
-            local Remote
-            for i, v in Netty:GetChildren() do
-                if v.Name == ez then
-                    Remote = Netty:GetChildren()[i + 1]
-                    break
-                end
-            end
-            if Remote and not rawget(S, ez) then rawset(S, ez, Remote) end
-            return rawget(S, ez)
-        end
-    })
-    local Utility = {}
-    function Utility:LarpNet(F) return Decrypted[F] end
+    
+    local function PlayTPSound()
+        local sound = Instance.new("Sound", workspace)
+        sound.SoundId = "rbxassetid://6042053626"; sound.Volume = 1.2; sound:Play()
+        task.delay(2, function() sound:Destroy() end)
+    end
 
     local function AddDropShadow(frame, radius)
         local shadow = Instance.new("ImageLabel", frame)
@@ -8083,24 +8069,53 @@ task.spawn(function()
             while frame.Parent do r = (r + 1) % 360; grad.Rotation = r; task.wait(0.04) end
         end)
     end
+    
+    local function Clk(button) 
+        if not button then return end
+        task.spawn(function()
+            pcall(function()
+                if getconnections then
+                    for _, conn in ipairs(getconnections(button.MouseButton1Click)) do 
+                        if type(conn.Function) == "function" then task.spawn(conn.Function) end 
+                    end
+                    for _, conn in ipairs(getconnections(button.Activated)) do 
+                        if type(conn.Function) == "function" then task.spawn(conn.Function) end 
+                    end
+                end
+            end)
+        end)
+    end
+    _G.Clk = Clk
 
     local function SimulateKey(keyString)
         if not keyString then return end
         local success, keyCode = pcall(function() return Enum.KeyCode[keyString] end)
         if not success or not keyCode then return end
 
-        task.spawn(function()
+        local fakeInput = {
+            KeyCode = keyCode,
+            UserInputType = Enum.UserInputType.Keyboard,
+            UserInputState = Enum.UserInputState.Begin
+        }
+        setmetatable(fakeInput, {
+            __index = function(t, k)
+                return function() return false end
+            end
+        })
+
+        if getconnections then
             pcall(function()
-                local vim = game:GetService("VirtualInputManager")
-                vim:SendKeyEvent(true, keyCode, false, game)
-                task.wait(0.05)
-                vim:SendKeyEvent(false, keyCode, false, game)
+                for _, conn in ipairs(getconnections(game:GetService("UserInputService").InputBegan)) do
+                    if type(conn.Function) == "function" then
+                        task.spawn(conn.Function, fakeInput, false)
+                    end
+                end
             end)
-        end)
+        end
     end
 
     -- =========================================================
-    -- 🎯 LA FONCTION INSTANT CLONE ULTIME (SERVER FIRE)
+    -- 🎯 LA FONCTION INSTANT CLONE ULTIME (SERVER DIRECT)
     -- =========================================================
     local function instantClone()
         if _G.isCloning then return end
@@ -8115,14 +8130,19 @@ task.spawn(function()
                 local cloner = Core.Player.Backpack:FindFirstChild("Quantum Cloner") or char:FindFirstChild("Quantum Cloner")
                 if not cloner then return end
 
-                -- Déséquiper puis rééquiper pour reset l'outil (évite un bug visuel)
+                -- Initialisation du module réseau de Pet Simulator 99
+                local Net = require(game:GetService("ReplicatedStorage").Packages.Net)
+
+                -- 1. On "range" tout pour reset l'état de l'outil (évite les bugs)
                 hum:UnequipTools()
-                task.wait(0.05)
+                task.wait(0.1)
+
+                -- 2. On équipe le clone et on l'active via RemoteEvent (comme le vrai jeu)
                 hum:EquipTool(cloner)
                 task.wait(0.05)
-                cloner:Activate()
+                Net:RemoteEvent("UseItem"):FireServer()
 
-                -- On attend que le clone apparaisse sur la carte
+                -- 3. On attend que le clone apparaisse vraiment sur la map
                 local cloneName = tostring(Core.Player.UserId) .. "_Clone"
                 local foundClone = false
                 for _ = 1, 50 do
@@ -8135,28 +8155,28 @@ task.spawn(function()
 
                 if not foundClone then return end
 
-                -- 🛑 DELAI ANTI-KICK
+                -- 4. 🛑 DELAI ANTI-KICK (0.4s) pour simuler un humain
                 task.wait(0.4)
 
-                -- 🚀 MAGIE : On envoie la commande directement au serveur, 0 clic sur l'interface !
-                local remote = Utility:LarpNet("RE/QuantumCloner/OnTeleport")
-                if remote then
-                    remote:FireServer()
-                end
+                -- 5. 🚀 LE BYPASS MAGIQUE : On dit au serveur de nous téléporter sans toucher l'interface !
+                Net:RemoteEvent("QuantumCloner/OnTeleport"):FireServer()
                 
-                -- On cache le menu cloner pour que ce soit propre à l'écran
+                -- 6. On cache les vieux menus moches qui peuvent rester bloqués à l'écran
                 pcall(function()
                     local toolsFrames = Core.Player.PlayerGui:FindFirstChild("ToolsFrames")
-                    local qcFrame = toolsFrames and toolsFrames:FindFirstChild("QuantumCloner")
-                    if qcFrame then
-                        for _, child in ipairs(qcFrame:GetChildren()) do
+                    if toolsFrames and toolsFrames:FindFirstChild("QuantumCloner") then
+                        for _, child in ipairs(toolsFrames.QuantumCloner:GetChildren()) do
                             if child:IsA("GuiButton") then child.Visible = false end
                         end
                     end
                 end)
+
+                -- 7. On déséquipe l'outil proprement pour le prochain essai
+                task.wait(0.1)
+                hum:UnequipTools()
             end)
             
-            task.wait(1)
+            task.wait(0.5)
             _G.isCloning = false
         end)
     end
@@ -9145,7 +9165,7 @@ task.spawn(function()
         local function ScanAdminHub()
             if not origGui then return false end 
             local origFrame = origGui:FindFirstChildOfClass("Frame")
-            if not origFrame then return false end 
+            if not origFrame then return end 
             for _, c in ipairs(origFrame:GetDescendants()) do 
                 if c:IsA("TextButton") then 
                     if c.Text:upper() == "REFRESH" then oRef = c end 
