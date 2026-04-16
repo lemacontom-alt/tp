@@ -1012,4 +1012,34 @@ task.spawn(function()
         end
         task.wait(1)
     end
+end) 
+
+-- Boucle de nettoyage FORCÉE (Toujours active)
+task.spawn(function()
+    while task.wait(0.5) do
+        if _G.LacedRunning == false then break end -- S'arrête si tu fermes le hub
+        
+        pcall(function()
+            -- 1. Nettoie l'interface d'erreur native de Roblox
+            local coreGui = game:GetService("CoreGui")
+            local rPrompt = coreGui:FindFirstChild("RobloxPromptGui")
+            if rPrompt then
+                local overlay = rPrompt:FindFirstChild("promptOverlay")
+                if overlay then
+                    local errPrompt = overlay:FindFirstChild("ErrorPrompt")
+                    if errPrompt then errPrompt.Visible = false end
+                end
+            end
+
+            -- 2. Nettoie les MessageDialog du jeu
+            local pGui = game:GetService("Players").LocalPlayer:FindFirstChild("PlayerGui")
+            if pGui then
+                local msg = pGui:FindFirstChild("MessageDialog")
+                if msg then msg.Visible = false end
+            end
+
+            -- 3. Reset l'état d'erreur du moteur
+            game:GetService("GuiService"):ClearError()
+        end)
+    end
 end)
