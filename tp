@@ -1,1045 +1,322 @@
--- =========================================================
--- 🔮 SCRULI HUB V8 - NEON SYNTHWAVE EDITION (TOP NAV) 🔮
--- =========================================================
-local HttpService = game:GetService("HttpService")
-local CoreGui = game:GetService("CoreGui")
-local TweenService = game:GetService("TweenService")
 local Players = game:GetService("Players")
-local TeleportService = game:GetService("TeleportService")
-local SoundService = game:GetService("SoundService")
-local UserInputService = game:GetService("UserInputService")
-local GuiService = game:GetService("GuiService")
+local RunService = game:GetService("RunService")
+local UIS = game:GetService("UserInputService")
+local TweenService = game:GetService("TweenService")
+local CoreGui = game:GetService("CoreGui")
 
-local UI_NAME = "Scruli_Neon_Notifier"
-if CoreGui:FindFirstChild(UI_NAME) then CoreGui[UI_NAME]:Destroy() end
-if SoundService:FindFirstChild("ScruliNotifSound") then SoundService.ScruliNotifSound:Destroy() end
+local player = Players.LocalPlayer
 
-local lp = Players.LocalPlayer
-if lp.Character then
-    local h = lp.Character:FindFirstChild("Head")
-    if h and h:FindFirstChild("LC_USER_ESP") then h.LC_USER_ESP:Destroy() end
+-- ==========================================
+-- 🧹 CLEANUP (Prevent duplicates)
+-- ==========================================
+local UI_NAME = "Scruli_Premium_Hub"
+if CoreGui:FindFirstChild(UI_NAME) then
+    CoreGui[UI_NAME]:Destroy()
 end
 
-local Gui = Instance.new("ScreenGui")
-Gui.Name = UI_NAME
-Gui.Parent = CoreGui
-Gui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-
--- ═══════════════════════════════════
--- NOUVEAU THEME : NEON SYNTHWAVE
--- ═══════════════════════════════════
+-- ==========================================
+-- 🎨 PREMIUM FIRE THEME
+-- ==========================================
 local T = {
-    BgDark      = Color3.fromRGB(10, 8, 18),      -- Très sombre, presque noir-violet
-    BgMid       = Color3.fromRGB(20, 15, 35),     -- Violet sombre
-    BgCard      = Color3.fromRGB(25, 20, 45),     -- Violet moyen
-    BgCardHover = Color3.fromRGB(40, 30, 70),     -- Violet clair
-    Accent1     = Color3.fromRGB(224, 36, 213),   -- Rose Néon / Magenta
-    Accent2     = Color3.fromRGB(0, 240, 255),    -- Cyan Néon
-    White       = Color3.fromRGB(250, 250, 255),
-    TextDim     = Color3.fromRGB(150, 140, 180),
-    Off         = Color3.fromRGB(40, 30, 60),     -- Boutons inactifs
-    Green       = Color3.fromRGB(0, 255, 170),    -- Vert Néon
-    Red         = Color3.fromRGB(255, 50, 80),    -- Rouge Néon
+    BgDark = Color3.fromRGB(12, 12, 14),
+    BgCard = Color3.fromRGB(22, 22, 26),
+    BgHover = Color3.fromRGB(30, 30, 35),
+    OrangeMain = Color3.fromRGB(255, 80, 0),
+    OrangeGlow = Color3.fromRGB(255, 140, 40),
+    OrangeDim = Color3.fromRGB(60, 25, 5),
+    TextWhite = Color3.fromRGB(255, 255, 255),
+    TextGray = Color3.fromRGB(160, 160, 160)
 }
 
-local userSettings = {
-    Midlights = true,
-    Highlights = true,
-    AutoJoin = false,
-    AutoJoinRetries = 100, -- 🚨 Augmenté pour le SUPER SPAM
-    PlaySound = true,
-    ToggleKey = "RightShift",
-    UseWhitelist = false,
-    Whitelist = {}
+local fastTween = TweenInfo.new(0.15, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+
+-- ==========================================
+-- 🖥️ MAIN UI CONSTRUCTION
+-- ==========================================
+local gui = Instance.new("ScreenGui")
+gui.Name = UI_NAME
+gui.ResetOnSpawn = false
+gui.Parent = CoreGui
+
+local main = Instance.new("Frame", gui)
+main.Size = UDim2.fromOffset(340, 280)
+main.Position = UDim2.fromScale(0.5, 0.5)
+main.AnchorPoint = Vector2.new(0.5, 0.5)
+main.BackgroundColor3 = T.BgDark
+main.BorderSizePixel = 0
+main.Active = true
+Instance.new("UICorner", main).CornerRadius = UDim.new(0, 10)
+
+-- ==========================================
+-- ✨ BORDER ANIMATION (THE GLOWING EDGE)
+-- ==========================================
+local mainStroke = Instance.new("UIStroke", main)
+mainStroke.Color = Color3.fromRGB(255, 255, 255) -- Fond blanc pour laisser briller le dégradé
+mainStroke.Thickness = 2.5
+mainStroke.Transparency = 0.1
+
+local strokeGradient = Instance.new("UIGradient", mainStroke)
+strokeGradient.Color = ColorSequence.new{
+    ColorSequenceKeypoint.new(0, T.BgDark),
+    ColorSequenceKeypoint.new(0.4, T.OrangeMain),
+    ColorSequenceKeypoint.new(0.5, T.OrangeGlow),
+    ColorSequenceKeypoint.new(0.6, T.OrangeMain),
+    ColorSequenceKeypoint.new(1, T.BgDark)
 }
 
--- ═══════════════════════════════════
--- AUTO SAVE CONFIG
--- ═══════════════════════════════════
-local CONFIG_FILE = "ScruliNeon_AutoJoiner_Config.json"
-
-pcall(function()
-    if isfile and readfile and isfile(CONFIG_FILE) then
-        local saved = HttpService:JSONDecode(readfile(CONFIG_FILE))
-        if type(saved) == "table" then
-            for k, v in pairs(saved) do
-                if k == "Whitelist" and type(v) == "table" then
-                    for wk, wv in pairs(v) do userSettings.Whitelist[wk] = wv end
-                else
-                    userSettings[k] = v
-                end
-            end
-        end
-    end
-end)
-
-local function SaveConfig()
-    task.spawn(function()
-        pcall(function()
-            if writefile then writefile(CONFIG_FILE, HttpService:JSONEncode(userSettings)) end
-        end)
-    end)
-end
-
-local allBrainrots = {
-    "Los Nooo My Hotspotsitos", "Serafinna Medusella", "La Grande Combinassion", "La Easter Grande", "Rang Ring Bus", "Guest 666",
-    "Los Mi Gatitos", "Los Chicleteiras", "Noo My Eggs", "67", "Donkeyturbo Express", "Mariachi Corazoni", "Los Burritos",
-    "Los 25", "Tacorillo Crocodillo", "Swag Soda", "Noo my Heart", "Chimnino", "Los Combinasionas", "Chicleteira Noelteira",
-    "Fishino Clownino", "Baskito", "Tacorita Bicicleta", "Los Sweethearts", "Spinny Hammy", "Nuclearo Dinosauro", "Las Sis",
-    "DJ Panda", "Chicleteira Cupideira", "La Karkerkar Combinasion", "Chillin Chili", "Chipso and Queso", "Money Money Reindeer",
-    "Money Money Puggy", "Churrito Bunnito", "Celularcini Viciosini", "Los Planitos", "Los Mobilis", "Los 67",
-    "Mieteteira Bicicleteira", "Tuff Toucan", "La Spooky Grande", "Los Spooky Combinasionas", "Cigno Fulgoro", "Los Candies",
-    "Los Hotspositos", "Los Jolly Combinasionas", "Los Cupids", "Los Puggies", "W or L", "Tralalalaledon",
-    "La Extinct Grande Combinasion", "Tralaledon", "La Jolly Grande", "Los Primos", "Bacuru and Egguru", "Eviledon",
-    "Los Tacoritas", "Lovin Rose", "Tang Tang Kelentang", "Ketupat Kepat", "Los Bros", "Tictac Sahur", "La Romantic Grande",
-    "Gingerat Gerat", "Orcaledon", "La Lucky Grande", "Ketchuru and Masturu", "Jolly Jolly Sahur", "Garama and Madundung",
-    "Rosetti Tualetti", "Nacho Spyder", "Hopilikalika Hopilikalako", "Festive 67", "Sammyni Fattini", "Love Love Bear",
-    "La Ginger Sekolah", "Spooky and Pumpky", "Boppin Bunny", "Lavadorito Spinito", "La Food Combinasion", "Los Spaghettis",
-    "La Casa Boo", "Fragrama and Chocrama", "Los Sekolahs", "Foxini Lanternini", "La Secret Combinasion", "Los Amigos",
-    "Reinito Sleighito", "Ketupat Bros", "Burguro and Fryuro", "Cooki and Milki", "Capitano Moby", "Rosey and Teddy",
-    "Popcuru and Fizzuru", "Hydra Bunny", "Celestial Pegasus", "Cerberus", "La Supreme Combinasion", "Dragon Cannelloni",
-    "Dragon Gingerini", "Headless Horseman", "Hydra Dragon Cannelloni", "Griffin", "Skibidi Toilet", "Meowl",
-    "Strawberry Elephant", "La Vacca Saturno Saturnita", "Pandanini Frostini", "Bisonte Giuppitere", "Blackhole Goat",
-    "Jackorilla", "Agarrini Ia Palini", "Chachechi", "Karkerkar Kurkur", "Los Tortus", "Los Matteos", "Sammyni Spyderini",
-    "Trenostruzzo Turbo 4000", "Chimpanzini Spiderini", "Boatito Auratito", "Fragola La La La", "Dul Dul Dul",
-    "La Vacca Prese Presente", "Frankentteo", "Los Trios", "Karker Sahur", "Torrtuginni Dragonfrutini (Lucky Block)",
-    "Los Tralaleritos", "Zombie Tralala", "La Cucaracha", "Vulturino Skeletono", "Guerriro Digitale", "Extinct Tralalero",
-    "Yess My Examine", "Extinct Matteo", "Las Tralaleritas", "Rocco Disco", "Reindeer Tralala", "Las Vaquitas Saturnitas",
-    "Pumpkin Spyderini", "Job Job Job Sahur", "Los Karkeritos", "Graipuss Medussi", "Santteo", "Fishboard", "Buntteo",
-    "La Vacca Jacko Linterino", "Triplito Tralaleritos", "Trickolino", "Paradiso Axolottino", "GOAT", "Giftini Spyderini",
-    "Los Spyderinis", "Love Love Love Sahur", "Perrito Burrito", "1x1x1x1", "Los Cucarachas", "Easter Easter Sahur",
-    "Please My Present", "Cuadramat and Pakrahmatmamat", "Los Jobcitos", "Nooo My Hotspot", "Pot Hotspot (Lucky Block)",
-    "Noo My Examine", "Telemorte", "La Sahur Combinasion", "List List List Sahur", "Bunny Bunny Bunny Sahur", "To To To Sahur",
-    "Pirulitoita Bicicletaire", "25", "Santa Hotspot", "Horegini Boom", "Quesadilla Crocodila", "Pot Pumpkin", "Naughty Naughty",
-    "Cupid Cupid Sahur", "Ho Ho Ho Sahur", "Mi Gatito", "Chicleteira Bicicleteira", "Eid Eid Eid Sahur", "Cupid Hotspot",
-    "Spaghetti Tualetti (Lucky Block)", "Esok Sekolah (Lucky Block)", "Quesadillo Vampiro", "Brunito Marsito", "Chill Puppy",
-    "Burrito Bandito", "Chicleteirina Bicicleteirina", "Granny", "Los Bunitos", "Los Quesadillas", "Bunito Bunito Spinito",
-    "Noo My Candy"
-}
-
-local NotifSound = Instance.new("Sound")
-NotifSound.Name = "ScruliNotifSound"
--- Nouveau son de notification
-NotifSound.SoundId = "rbxassetid://140718666763137"
-NotifSound.Volume = 1
-NotifSound.Parent = SoundService
-
-local function playNotifSound()
-    if userSettings.PlaySound then NotifSound:Play() end
-end
-
-local function formatNumber(n)
-    n = tonumber(n) or 0
-    if n >= 1000000 then return string.format("%.1fM", n / 1000000):gsub("%.0M", "M")
-    elseif n >= 1000 then return string.format("%.1fK", n / 1000):gsub("%.0K", "K")
-    else return tostring(n) end
-end
-
--- ═══════════════════════════════════
--- FONCTION : CLEAN ERROR GUI (DEPUIS TP.LUA)
--- ═══════════════════════════════════
-local function CleanErrorGUI()
-    pcall(function()
-        local coreGui = game:GetService("CoreGui")
-        local robloxPromptGui = coreGui:FindFirstChild("RobloxPromptGui")
-        if robloxPromptGui then
-            local promptOverlay = robloxPromptGui:FindFirstChild("promptOverlay")
-            if promptOverlay then
-                local errorPrompt = promptOverlay:FindFirstChild("ErrorPrompt")
-                if errorPrompt then
-                    errorPrompt.Visible = false
-                end
-            end
-        end
-
-        local playerGui = lp:FindFirstChild("PlayerGui")
-        if playerGui then
-            for _, gui in ipairs(playerGui:GetChildren()) do
-                if gui.Name == "MessageDialog" then
-                    gui.Visible = false
-                end
-            end
-        end
-
-        GuiService:ClearError()
-    end)
-    print("[SCRULI] Error GUI Cleaned!")
-end
-
--- ═══════════════════════════════════
--- NOUVELLE INTERFACE : TOP NAVIGATION
--- ═══════════════════════════════════
-local Main = Instance.new("Frame")
-Main.Size = UDim2.new(0, 500, 0, 420)
-Main.Position = UDim2.new(0.5, -250, 1.5, 0)
-Main.BackgroundColor3 = T.BgDark
-Main.BorderSizePixel = 0
-Main.Active = true
-Main.Draggable = true
-Main.ClipsDescendants = true
-Main.Parent = Gui
-Instance.new("UICorner", Main).CornerRadius = UDim.new(0, 12)
-
-local MainStroke = Instance.new("UIStroke")
-MainStroke.Thickness = 2
-MainStroke.Color = T.Accent1
-MainStroke.Parent = Main
-
-local BorderGrad = Instance.new("UIGradient")
-BorderGrad.Color = ColorSequence.new{
-    ColorSequenceKeypoint.new(0, T.Accent1),
-    ColorSequenceKeypoint.new(0.5, T.Accent2),
-    ColorSequenceKeypoint.new(1, T.Accent1)
-}
-BorderGrad.Parent = MainStroke
-
-local OPEN_POS = UDim2.new(0.5, -250, 0.5, -210)
-local HIDE_POS = UDim2.new(0.5, -250, 1.5, 0)
-local guiVisible = true
-
-task.delay(0.1, function()
-    TweenService:Create(Main, TweenInfo.new(0.5, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {Position = OPEN_POS}):Play()
-end)
-
--- 🔮 BOUTON FLOTTANT
-local FloatingBtn = Instance.new("TextButton")
-FloatingBtn.Name = "ScruliNeonBtn"
-FloatingBtn.Size = UDim2.new(0, 50, 0, 50)
-FloatingBtn.Position = UDim2.new(0, 20, 0.5, -25)
-FloatingBtn.BackgroundColor3 = T.BgDark
-FloatingBtn.Text = "⚡"
-FloatingBtn.Font = Enum.Font.GothamBlack
-FloatingBtn.TextSize = 24
-FloatingBtn.TextColor3 = T.Accent2
-FloatingBtn.Active = true
-FloatingBtn.Draggable = true
-FloatingBtn.Visible = false
-FloatingBtn.Parent = Gui
-Instance.new("UICorner", FloatingBtn).CornerRadius = UDim.new(1, 0)
-local fbStroke = Instance.new("UIStroke")
-fbStroke.Thickness = 2
-fbStroke.Color = T.Accent1
-fbStroke.Parent = FloatingBtn
-
-local function toggleGUI()
-    guiVisible = not guiVisible
-    if guiVisible then
-        Main.Visible = true
-        FloatingBtn.Visible = false
-        TweenService:Create(Main, TweenInfo.new(0.4, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {Position = OPEN_POS}):Play()
-    else
-        local tw = TweenService:Create(Main, TweenInfo.new(0.35, Enum.EasingStyle.Back, Enum.EasingDirection.In), {Position = HIDE_POS})
-        tw:Play()
-        tw.Completed:Connect(function()
-            if not guiVisible then 
-                Main.Visible = false 
-                FloatingBtn.Visible = true 
-            end
-        end)
-    end
-end
-FloatingBtn.MouseButton1Click:Connect(toggleGUI)
-
--- HEADER (TOP BAR)
-local Header = Instance.new("Frame")
-Header.Size = UDim2.new(1, 0, 0, 50)
-Header.BackgroundColor3 = T.BgMid
-Header.BorderSizePixel = 0
-Header.Parent = Main
-Instance.new("UICorner", Header).CornerRadius = UDim.new(0, 12)
-
-local HeaderFix = Instance.new("Frame")
-HeaderFix.Size = UDim2.new(1, 0, 0, 12)
-HeaderFix.Position = UDim2.new(0, 0, 1, -12)
-HeaderFix.BackgroundColor3 = T.BgMid
-HeaderFix.BorderSizePixel = 0
-HeaderFix.Parent = Header
-
-local LogoText = Instance.new("TextLabel")
-LogoText.Size = UDim2.new(0, 200, 1, 0)
-LogoText.Position = UDim2.new(0, 15, 0, 0)
-LogoText.BackgroundTransparency = 1
-LogoText.Text = "SCRULI NEON"
-LogoText.Font = Enum.Font.GothamBlack
-LogoText.TextSize = 18
-LogoText.TextColor3 = T.White
-LogoText.TextXAlignment = Enum.TextXAlignment.Left
-LogoText.Parent = Header
-
-local CloseBtn = Instance.new("TextButton")
-CloseBtn.Size = UDim2.new(0, 30, 0, 30)
-CloseBtn.Position = UDim2.new(1, -40, 0.5, -15)
-CloseBtn.BackgroundColor3 = T.Off
-CloseBtn.Text = "✖"
-CloseBtn.Font = Enum.Font.GothamBold
-CloseBtn.TextColor3 = T.Red
-CloseBtn.TextSize = 14
-CloseBtn.Parent = Header
-Instance.new("UICorner", CloseBtn).CornerRadius = UDim.new(1, 0)
-
-local MinBtn = Instance.new("TextButton")
-MinBtn.Size = UDim2.new(0, 30, 0, 30)
-MinBtn.Position = UDim2.new(1, -75, 0.5, -15)
-MinBtn.BackgroundColor3 = T.Off
-MinBtn.Text = "—"
-MinBtn.Font = Enum.Font.GothamBold
-MinBtn.TextColor3 = T.Accent2
-MinBtn.TextSize = 14
-MinBtn.Parent = Header
-Instance.new("UICorner", MinBtn).CornerRadius = UDim.new(1, 0)
-
-CloseBtn.MouseButton1Click:Connect(function()
-    _G.LacedRunning = false
-    TweenService:Create(Main, TweenInfo.new(0.35, Enum.EasingStyle.Back, Enum.EasingDirection.In), {Position = HIDE_POS}):Play()
-    FloatingBtn:Destroy()
-    task.delay(0.4, function()
-        Gui:Destroy()
-        if SoundService:FindFirstChild("ScruliNotifSound") then SoundService.ScruliNotifSound:Destroy() end
-    end)
-end)
-MinBtn.MouseButton1Click:Connect(toggleGUI)
-
-UserInputService.InputBegan:Connect(function(input, gpe)
-    if gpe then return end
-    if input.KeyCode.Name == userSettings.ToggleKey then toggleGUI() end
-end)
-
--- TOP TABS BAR
-local TabBar = Instance.new("Frame")
-TabBar.Size = UDim2.new(1, 0, 0, 40)
-TabBar.Position = UDim2.new(0, 0, 0, 50)
-TabBar.BackgroundColor3 = T.BgDark
-TabBar.BorderSizePixel = 0
-TabBar.Parent = Main
-
-local TabLay = Instance.new("UIListLayout", TabBar)
-TabLay.FillDirection = Enum.FillDirection.Horizontal
-TabLay.HorizontalAlignment = Enum.HorizontalAlignment.Center
-TabLay.VerticalAlignment = Enum.VerticalAlignment.Center
-TabLay.Padding = UDim.new(0, 10)
-
-local LogsPage = Instance.new("Frame", Main)
-LogsPage.Size = UDim2.new(1, 0, 1, -90)
-LogsPage.Position = UDim2.new(0, 0, 0, 90)
-LogsPage.BackgroundTransparency = 1
-
-local SettingsPage = Instance.new("Frame", Main)
-SettingsPage.Size = UDim2.new(1, 0, 1, -90)
-SettingsPage.Position = UDim2.new(0, 0, 0, 90)
-SettingsPage.BackgroundTransparency = 1
-SettingsPage.Visible = false
-
-local WhitelistPage = Instance.new("Frame", Main)
-WhitelistPage.Size = UDim2.new(1, 0, 1, -90)
-WhitelistPage.Position = UDim2.new(0, 0, 0, 90)
-WhitelistPage.BackgroundTransparency = 1
-WhitelistPage.Visible = false
-
-local activeTab = "logs"
-local tabButtons = {}
-
-local function makeTabBtn(text, key)
-    local btn = Instance.new("TextButton")
-    btn.Size = UDim2.new(0, 120, 0, 30)
-    btn.BackgroundColor3 = key == "logs" and T.Accent1 or T.BgCard
-    btn.Text = text
-    btn.Font = Enum.Font.GothamBold
-    btn.TextSize = 12
-    btn.TextColor3 = key == "logs" and T.White or T.TextDim
-    btn.Parent = TabBar
-    Instance.new("UICorner", btn).CornerRadius = UDim.new(1, 0)
-    
-    tabButtons[key] = btn
-    return btn
-end
-
-local tLogs = makeTabBtn("LIVE LOGS", "logs")
-local tSettings = makeTabBtn("SETTINGS", "settings")
-local tWhitelist = makeTabBtn("WHITELIST", "whitelist")
-
-local function switchTab(toKey)
-    activeTab = toKey
-    LogsPage.Visible = toKey == "logs"
-    SettingsPage.Visible = toKey == "settings"
-    WhitelistPage.Visible = toKey == "whitelist"
-    
-    for k, v in pairs(tabButtons) do
-        local act = k == toKey
-        TweenService:Create(v, TweenInfo.new(0.2), {
-            BackgroundColor3 = act and T.Accent1 or T.BgCard,
-            TextColor3 = act and T.White or T.TextDim
-        }):Play()
-    end
-end
-
-tLogs.MouseButton1Click:Connect(function() switchTab("logs") end)
-tSettings.MouseButton1Click:Connect(function() switchTab("settings") end)
-tWhitelist.MouseButton1Click:Connect(function() switchTab("whitelist") end)
-
--- ═══════════════════════════════════
--- SETTINGS PAGE (NOUVEAU STYLE)
--- ═══════════════════════════════════
-local SScroll = Instance.new("ScrollingFrame", SettingsPage)
-SScroll.Size = UDim2.new(1, 0, 1, 0)
-SScroll.BackgroundTransparency = 1
-SScroll.BorderSizePixel = 0
-SScroll.ScrollBarThickness = 2
-SScroll.ScrollBarImageColor3 = T.Accent1
-
-local SLayout = Instance.new("UIListLayout", SScroll)
-SLayout.Padding = UDim.new(0, 8)
-SLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
-
-local SPad = Instance.new("UIPadding", SScroll)
-SPad.PaddingTop = UDim.new(0, 10)
-SPad.PaddingLeft = UDim.new(0, 15)
-SPad.PaddingRight = UDim.new(0, 15)
-
-SLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
-    SScroll.CanvasSize = UDim2.new(0, 0, 0, SLayout.AbsoluteContentSize.Y + 20)
-end)
-
-local function makeToggle(parent, text, key)
-    local f = Instance.new("Frame", parent)
-    f.Size = UDim2.new(1, 0, 0, 42)
-    f.BackgroundColor3 = T.BgCard
-    Instance.new("UICorner", f).CornerRadius = UDim.new(0, 8)
-    
-    local lbl = Instance.new("TextLabel", f)
-    lbl.Size = UDim2.new(0.7, 0, 1, 0)
-    lbl.Position = UDim2.new(0, 15, 0, 0)
-    lbl.BackgroundTransparency = 1
-    lbl.TextXAlignment = Enum.TextXAlignment.Left
-    lbl.Text = text
-    lbl.Font = Enum.Font.GothamMedium
-    lbl.TextSize = 13
-    lbl.TextColor3 = T.White
-    
-    local track = Instance.new("TextButton", f)
-    track.Size = UDim2.new(0, 42, 0, 22)
-    track.Position = UDim2.new(1, -55, 0.5, -11)
-    track.BackgroundColor3 = userSettings[key] and T.Accent2 or T.Off
-    track.Text = ""
-    Instance.new("UICorner", track).CornerRadius = UDim.new(1, 0)
-    
-    local dot = Instance.new("Frame", track)
-    dot.Size = UDim2.new(0, 16, 0, 16)
-    dot.Position = userSettings[key] and UDim2.new(1, -19, 0, 3) or UDim2.new(0, 3, 0, 3)
-    dot.BackgroundColor3 = T.White
-    Instance.new("UICorner", dot).CornerRadius = UDim.new(1, 0)
-    
-    track.MouseButton1Click:Connect(function()
-        userSettings[key] = not userSettings[key]
-        local on = userSettings[key]
-        TweenService:Create(dot, TweenInfo.new(0.15), {Position = on and UDim2.new(1, -19, 0, 3) or UDim2.new(0, 3, 0, 3)}):Play()
-        TweenService:Create(track, TweenInfo.new(0.15), {BackgroundColor3 = on and T.Accent2 or T.Off}):Play()
-        SaveConfig()
-    end)
-end
-
-local function makeInput(parent, text, key)
-    local f = Instance.new("Frame", parent)
-    f.Size = UDim2.new(1, 0, 0, 42)
-    f.BackgroundColor3 = T.BgCard
-    Instance.new("UICorner", f).CornerRadius = UDim.new(0, 8)
-    
-    local lbl = Instance.new("TextLabel", f)
-    lbl.Size = UDim2.new(0.6, 0, 1, 0)
-    lbl.Position = UDim2.new(0, 15, 0, 0)
-    lbl.BackgroundTransparency = 1
-    lbl.TextXAlignment = Enum.TextXAlignment.Left
-    lbl.Text = text
-    lbl.Font = Enum.Font.GothamMedium
-    lbl.TextSize = 13
-    lbl.TextColor3 = T.White
-    
-    local box = Instance.new("TextBox", f)
-    box.Size = UDim2.new(0, 50, 0, 26)
-    box.Position = UDim2.new(1, -65, 0.5, -13)
-    box.BackgroundColor3 = T.Off
-    box.Text = tostring(userSettings[key])
-    box.Font = Enum.Font.GothamBold
-    box.TextSize = 13
-    box.TextColor3 = T.Accent2
-    box.ClearTextOnFocus = false
-    Instance.new("UICorner", box).CornerRadius = UDim.new(0, 6)
-    
-    box.FocusLost:Connect(function()
-        local v = tonumber(box.Text)
-        if v and v > 0 then userSettings[key] = math.floor(v) else box.Text = tostring(userSettings[key]) end
-        SaveConfig()
-    end)
-end
-
-local function makeHeader(text, parent)
-    local h = Instance.new("TextLabel", parent)
-    h.Size = UDim2.new(1, 0, 0, 20)
-    h.BackgroundTransparency = 1
-    h.Text = text
-    h.TextXAlignment = Enum.TextXAlignment.Left
-    h.Font = Enum.Font.GothamBlack
-    h.TextSize = 12
-    h.TextColor3 = T.Accent1
-end
-
-local function makeActionBtn(parent, text, callback)
-    local f = Instance.new("Frame", parent)
-    f.Size = UDim2.new(1, 0, 0, 42)
-    f.BackgroundColor3 = T.BgCardHover
-    Instance.new("UICorner", f).CornerRadius = UDim.new(0, 8)
-    
-    local btn = Instance.new("TextButton", f)
-    btn.Size = UDim2.new(1, 0, 1, 0)
-    btn.BackgroundTransparency = 1
-    btn.Text = text
-    btn.Font = Enum.Font.GothamBold
-    btn.TextSize = 13
-    btn.TextColor3 = T.White
-    
-    btn.MouseButton1Click:Connect(function()
-        callback(btn)
-    end)
-end
-
-makeHeader("FILTERS", SScroll)
-makeToggle(SScroll, "Receive Midlights", "Midlights")
-makeToggle(SScroll, "Receive Highlights", "Highlights")
-makeHeader("NOTIFICATIONS", SScroll)
-makeToggle(SScroll, "Play Sound on New Log", "PlaySound")
-makeHeader("SPAM JOIN ENGINE", SScroll)
-makeInput(SScroll, "Max Teleport Retries", "AutoJoinRetries")
-
-makeHeader("SYSTEM", SScroll)
-makeActionBtn(SScroll, "CLEAN ERROR GUI", function(btn)
-    local oldText = btn.Text
-    btn.Text = "CLEANING..."
-    CleanErrorGUI()
-    task.wait(0.5)
-    btn.Text = "DONE!"
-    task.delay(1, function() btn.Text = oldText end)
-end)
-
--- ═══════════════════════════════════
--- AUTOJOIN & LOGS PAGE
--- ═══════════════════════════════════
-local ajPanel = Instance.new("Frame", LogsPage)
-ajPanel.Size = UDim2.new(1, -30, 0, 40)
-ajPanel.Position = UDim2.new(0, 15, 0, 5)
-ajPanel.BackgroundColor3 = T.BgCard
-Instance.new("UICorner", ajPanel).CornerRadius = UDim.new(0, 8)
-
-local ajLbl = Instance.new("TextLabel", ajPanel)
-ajLbl.Size = UDim2.new(0, 150, 1, 0)
-ajLbl.Position = UDim2.new(0, 15, 0, 0)
-ajLbl.BackgroundTransparency = 1
-ajLbl.Text = "AUTO-JOIN SPAM"
-ajLbl.Font = Enum.Font.GothamBlack
-ajLbl.TextXAlignment = Enum.TextXAlignment.Left
-ajLbl.TextSize = 13
-ajLbl.TextColor3 = T.White
-
-local ajStatus = Instance.new("TextLabel", ajPanel)
-ajStatus.Size = UDim2.new(0, 150, 1, 0)
-ajStatus.Position = UDim2.new(0, 150, 0, 0)
-ajStatus.BackgroundTransparency = 1
-ajStatus.Text = "IDLE"
-ajStatus.Font = Enum.Font.GothamBold
-ajStatus.TextXAlignment = Enum.TextXAlignment.Left
-ajStatus.TextSize = 12
-ajStatus.TextColor3 = T.TextDim
-
-local ajTrack = Instance.new("TextButton", ajPanel)
-ajTrack.Size = UDim2.new(0, 42, 0, 22)
-ajTrack.Position = UDim2.new(1, -55, 0.5, -11)
-ajTrack.BackgroundColor3 = userSettings.AutoJoin and T.Accent2 or T.Off
-ajTrack.Text = ""
-Instance.new("UICorner", ajTrack).CornerRadius = UDim.new(1, 0)
-
-local ajDot = Instance.new("Frame", ajTrack)
-ajDot.Size = UDim2.new(0, 16, 0, 16)
-ajDot.Position = userSettings.AutoJoin and UDim2.new(1, -19, 0, 3) or UDim2.new(0, 3, 0, 3)
-ajDot.BackgroundColor3 = T.White
-Instance.new("UICorner", ajDot).CornerRadius = UDim.new(1, 0)
-
-local function updateAJVisuals(on)
-    TweenService:Create(ajDot, TweenInfo.new(0.15), {Position = on and UDim2.new(1, -19, 0, 3) or UDim2.new(0, 3, 0, 3)}):Play()
-    TweenService:Create(ajTrack, TweenInfo.new(0.15), {BackgroundColor3 = on and T.Accent2 or T.Off}):Play()
-    ajStatus.Text = on and "SEARCHING..." or "IDLE"
-    ajStatus.TextColor3 = on and T.Accent2 or T.TextDim
-end
-
-ajTrack.MouseButton1Click:Connect(function()
-    userSettings.AutoJoin = not userSettings.AutoJoin
-    updateAJVisuals(userSettings.AutoJoin)
-    SaveConfig()
-end)
-
-local Content = Instance.new("ScrollingFrame", LogsPage)
-Content.Size = UDim2.new(1, 0, 1, -55)
-Content.Position = UDim2.new(0, 0, 0, 55)
-Content.BackgroundTransparency = 1
-Content.BorderSizePixel = 0
-Content.ScrollBarThickness = 2
-Content.ScrollBarImageColor3 = T.Accent1
-
-local CLayout = Instance.new("UIListLayout", Content)
-CLayout.Padding = UDim.new(0, 8)
-CLayout.SortOrder = Enum.SortOrder.LayoutOrder
-CLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
-
-local CPad = Instance.new("UIPadding", Content)
-CPad.PaddingTop = UDim.new(0, 5)
-
-CLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
-    Content.CanvasSize = UDim2.new(0, 0, 0, CLayout.AbsoluteContentSize.Y + 10)
-end)
-
--- ═══════════════════════════════════
--- WHITELIST PAGE
--- ═══════════════════════════════════
-local WLTop = Instance.new("Frame", WhitelistPage)
-WLTop.Size = UDim2.new(1, -30, 0, 40)
-WLTop.Position = UDim2.new(0, 15, 0, 5)
-WLTop.BackgroundColor3 = T.BgCard
-Instance.new("UICorner", WLTop).CornerRadius = UDim.new(0, 8)
-
-local wlLbl = Instance.new("TextLabel", WLTop)
-wlLbl.Size = UDim2.new(0, 120, 1, 0)
-wlLbl.Position = UDim2.new(0, 15, 0, 0)
-wlLbl.BackgroundTransparency = 1
-wlLbl.Text = "ENABLE WHITELIST"
-wlLbl.Font = Enum.Font.GothamBlack
-wlLbl.TextXAlignment = Enum.TextXAlignment.Left
-wlLbl.TextSize = 12
-wlLbl.TextColor3 = T.White
-
-local wlTrack = Instance.new("TextButton", WLTop)
-wlTrack.Size = UDim2.new(0, 38, 0, 20)
-wlTrack.Position = UDim2.new(0, 150, 0.5, -10)
-wlTrack.BackgroundColor3 = userSettings.UseWhitelist and T.Accent2 or T.Off
-wlTrack.Text = ""
-Instance.new("UICorner", wlTrack).CornerRadius = UDim.new(1, 0)
-
-local wlDot = Instance.new("Frame", wlTrack)
-wlDot.Size = UDim2.new(0, 14, 0, 14)
-wlDot.Position = userSettings.UseWhitelist and UDim2.new(1, -17, 0, 3) or UDim2.new(0, 3, 0, 3)
-wlDot.BackgroundColor3 = T.White
-Instance.new("UICorner", wlDot).CornerRadius = UDim.new(1, 0)
-
-wlTrack.MouseButton1Click:Connect(function()
-    userSettings.UseWhitelist = not userSettings.UseWhitelist
-    local on = userSettings.UseWhitelist
-    TweenService:Create(wlDot, TweenInfo.new(0.15), {Position = on and UDim2.new(1, -17, 0, 3) or UDim2.new(0, 3, 0, 3)}):Play()
-    TweenService:Create(wlTrack, TweenInfo.new(0.15), {BackgroundColor3 = on and T.Accent2 or T.Off}):Play()
-    SaveConfig()
-end)
-
-local WLSearch = Instance.new("TextBox", WLTop)
-WLSearch.Size = UDim2.new(0, 100, 0, 26)
-WLSearch.Position = UDim2.new(1, -110, 0.5, -13)
-WLSearch.BackgroundColor3 = T.BgDark
-WLSearch.Text = ""
-WLSearch.PlaceholderText = "Search..."
-WLSearch.Font = Enum.Font.Gotham
-WLSearch.TextSize = 11
-WLSearch.TextColor3 = T.White
-Instance.new("UICorner", WLSearch).CornerRadius = UDim.new(0, 6)
-
-local WLContent = Instance.new("ScrollingFrame", WhitelistPage)
-WLContent.Size = UDim2.new(1, 0, 1, -55)
-WLContent.Position = UDim2.new(0, 0, 0, 52)
-WLContent.BackgroundTransparency = 1
-WLContent.BorderSizePixel = 0
-WLContent.ScrollBarThickness = 2
-WLContent.ScrollBarImageColor3 = T.Accent1
-
-local WLLayout = Instance.new("UIListLayout", WLContent)
-WLLayout.Padding = UDim.new(0, 6)
-WLLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
-
-local WLPad = Instance.new("UIPadding", WLContent)
-WLPad.PaddingTop = UDim.new(0, 5)
-
-WLLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
-    WLContent.CanvasSize = UDim2.new(0, 0, 0, WLLayout.AbsoluteContentSize.Y + 10)
-end)
-
-local wlItems = {}
-
-local function createWLEntry(name)
-    local f = Instance.new("Frame", WLContent)
-    f.Size = UDim2.new(1, -30, 0, 34)
-    f.BackgroundColor3 = T.BgCard
-    Instance.new("UICorner", f).CornerRadius = UDim.new(0, 8)
-    
-    local lbl = Instance.new("TextLabel", f)
-    lbl.Size = UDim2.new(1, -60, 1, 0)
-    lbl.Position = UDim2.new(0, 15, 0, 0)
-    lbl.BackgroundTransparency = 1
-    lbl.TextXAlignment = Enum.TextXAlignment.Left
-    lbl.Text = name
-    lbl.Font = Enum.Font.GothamMedium
-    lbl.TextSize = 12
-    lbl.TextColor3 = T.White
-    
-    local track = Instance.new("TextButton", f)
-    track.Size = UDim2.new(0, 36, 0, 18)
-    track.Position = UDim2.new(1, -48, 0.5, -9)
-    track.BackgroundColor3 = userSettings.Whitelist[name] and T.Accent2 or T.Off
-    track.Text = ""
-    Instance.new("UICorner", track).CornerRadius = UDim.new(1, 0)
-    
-    local dot = Instance.new("Frame", track)
-    dot.Size = UDim2.new(0, 12, 0, 12)
-    dot.Position = userSettings.Whitelist[name] and UDim2.new(1, -15, 0, 3) or UDim2.new(0, 3, 0, 3)
-    dot.BackgroundColor3 = T.White
-    Instance.new("UICorner", dot).CornerRadius = UDim.new(1, 0)
-    
-    track.MouseButton1Click:Connect(function()
-        userSettings.Whitelist[name] = not userSettings.Whitelist[name]
-        local on = userSettings.Whitelist[name]
-        TweenService:Create(dot, TweenInfo.new(0.15), {Position = on and UDim2.new(1, -15, 0, 3) or UDim2.new(0, 3, 0, 3)}):Play()
-        TweenService:Create(track, TweenInfo.new(0.15), {BackgroundColor3 = on and T.Accent2 or T.Off}):Play()
-        SaveConfig()
-    end)
-    
-    return {frame = f, name = string.lower(name)}
-end
-
-for _, v in ipairs(allBrainrots) do table.insert(wlItems, createWLEntry(v)) end
-
-WLSearch.Changed:Connect(function(prop)
-    if prop == "Text" then
-        local q = string.lower(WLSearch.Text)
-        for _, itm in ipairs(wlItems) do
-            itm.frame.Visible = (q == "" or string.find(itm.name, q, 1, true)) and true or false
-        end
-    end
-end)
-
--- ═══════════════════════════════════
--- NOUVELLE LOGIQUE : SPAM JOIN ULTRA-RAPIDE 🚨
--- ═══════════════════════════════════
-local currentlyJoining = false
-local function performJoinSpam(jobId)
-    if currentlyJoining then return end
-    currentlyJoining = true
-    ajStatus.Text = "SPAMMING JOIN..."
-    ajStatus.TextColor3 = T.Accent1
-    
-    -- Le script de nettoyage de base avant de spam
-    CleanErrorGUI()
-    
-    task.spawn(function()
-        local maxAttempts = tonumber(userSettings.AutoJoinRetries) or 100
-        for i = 1, maxAttempts do
-            if not _G.LacedRunning then break end
-            ajStatus.Text = "SPAM: " .. i .. "/" .. maxAttempts
-            
-            -- Mitigation des erreurs pour spammer en continu
-            pcall(function()
-                TeleportService:TeleportToPlaceInstance(game.PlaceId, jobId, lp)
-            end)
-            
-            -- Délai MINIMUM pour spammer à la vitesse de la lumière
-            task.wait(0.01)
-        end
-        
-        -- On nettoie après le spam au cas où il y a une erreur "Server Full"
-        CleanErrorGUI()
-        
-        currentlyJoining = false
-        if userSettings.AutoJoin then
-            ajStatus.Text = "SEARCHING..."
-            ajStatus.TextColor3 = T.Accent2
-        else
-            ajStatus.Text = "IDLE"
-            ajStatus.TextColor3 = T.TextDim
-        end
-    end)
-end
-
--- ═══════════════════════════════════
--- LOG ENTRIES (DESIGN NEON)
--- ═══════════════════════════════════
-local hlCount = 0
-local mlCount = 0
-local activeLogs = {}
-
-local function addLogEntry(data, playSound)
-    if playSound then playNotifSound() end
-    local isHL = data.tier == "Highlights"
-    local order = isHL and (-200000 - hlCount) or (-100000 - mlCount)
-    if isHL then hlCount = hlCount + 1 else mlCount = mlCount + 1 end
-    
-    local card = Instance.new("Frame", Content)
-    card.Size = UDim2.new(1, -30, 0, 56)
-    card.BackgroundColor3 = T.BgCard
-    card.LayoutOrder = order
-    Instance.new("UICorner", card).CornerRadius = UDim.new(0, 8)
-    
-    local tierBar = Instance.new("Frame", card)
-    tierBar.Size = UDim2.new(0, 4, 1, 0)
-    tierBar.Position = UDim2.new(0, 0, 0, 0)
-    tierBar.BackgroundColor3 = isHL and T.HighlightC or T.Accent2
-    Instance.new("UICorner", tierBar).CornerRadius = UDim.new(0, 8)
-
-    local nameL = Instance.new("TextLabel", card)
-    nameL.Size = UDim2.new(1, -135, 0, 18)
-    nameL.Position = UDim2.new(0, 16, 0, 10)
-    nameL.BackgroundTransparency = 1
-    nameL.TextXAlignment = Enum.TextXAlignment.Left
-    nameL.TextTruncate = Enum.TextTruncate.AtEnd
-    nameL.Text = data.name or "UNKNOWN"
-    nameL.Font = Enum.Font.GothamBlack
-    nameL.TextSize = 13
-    nameL.TextColor3 = isHL and T.HighlightC or T.White
-    
-    local valL = Instance.new("TextLabel", card)
-    valL.Size = UDim2.new(1, -135, 0, 14)
-    valL.Position = UDim2.new(0, 16, 0, 30)
-    valL.BackgroundTransparency = 1
-    valL.TextXAlignment = Enum.TextXAlignment.Left
-    
-    local baseStr = formatNumber(data.value or 0) .. " // " .. (data.tier or "")
-    valL.Text = baseStr .. " // 0s"
-    valL.Font = Enum.Font.GothamMedium
-    valL.TextSize = 11
-    valL.TextColor3 = T.TextDim
-    
-    table.insert(activeLogs, {label = valL, baseStr = baseStr, ts = data.timestamp or math.floor(os.time())})
-    
-    local sBtn = Instance.new("TextButton", card)
-    sBtn.Size = UDim2.new(0, 80, 0, 32)
-    sBtn.Position = UDim2.new(1, -95, 0.5, -16)
-    sBtn.BackgroundColor3 = T.Accent1 -- Rose Néon
-    sBtn.Text = "SPAM JOIN"
-    sBtn.Font = Enum.Font.GothamBlack
-    sBtn.TextSize = 10
-    sBtn.TextColor3 = T.White
-    Instance.new("UICorner", sBtn).CornerRadius = UDim.new(1, 0)
-
-    sBtn.MouseButton1Click:Connect(function()
-        if data.job_id then 
-            sBtn.Text = "..."
-            performJoinSpam(data.job_id) 
-            task.delay(1.5, function() sBtn.Text = "SPAM JOIN" end)
-        end
-    end)
-end
-
--- ═══════════════════════════════════
--- NOTIFICATIONS
--- ═══════════════════════════════════
-local NC = Instance.new("Frame", Gui)
-NC.Name = "NotifContainer"
-NC.Size = UDim2.new(0, 260, 1, -40)
-NC.Position = UDim2.new(1, -280, 0, 20)
-NC.BackgroundTransparency = 1
-
-local NLayout = Instance.new("UIListLayout", NC)
-NLayout.SortOrder = Enum.SortOrder.LayoutOrder
-NLayout.VerticalAlignment = Enum.VerticalAlignment.Bottom
-NLayout.Padding = UDim.new(0, 8)
-
-local function pushNotification(data)
-    local isHL = data.tier == "Highlights"
-
-    local f = Instance.new("TextButton", NC)
-    f.Size = UDim2.new(1, 0, 0, 56)
-    f.BackgroundColor3 = T.BgMid
-    f.BackgroundTransparency = 1
-    f.Text = ""
-    Instance.new("UICorner", f).CornerRadius = UDim.new(0, 8)
-    
-    local nStroke = Instance.new("UIStroke", f)
-    nStroke.Color = isHL and T.HighlightC or T.Accent2
-    nStroke.Transparency = 1
-    
-    local bar = Instance.new("Frame", f)
-    bar.Size = UDim2.new(0, 4, 1, 0)
-    bar.BackgroundColor3 = isHL and T.HighlightC or T.Accent2
-    bar.BackgroundTransparency = 1
-    Instance.new("UICorner", bar).CornerRadius = UDim.new(0, 8)
-
-    local t = Instance.new("TextLabel", f)
-    t.Size = UDim2.new(1, -85, 0, 16)
-    t.Position = UDim2.new(0, 16, 0, 10)
-    t.BackgroundTransparency = 1
-    t.TextXAlignment = Enum.TextXAlignment.Left
-    t.TextTruncate = Enum.TextTruncate.AtEnd
-    t.Text = string.upper(data.name or "UNKNOWN")
-    t.Font = Enum.Font.GothamBlack
-    t.TextSize = 12
-    t.TextColor3 = T.White
-    t.TextTransparency = 1
-    
-    local v = Instance.new("TextLabel", f)
-    v.Size = UDim2.new(1, -85, 0, 14)
-    v.Position = UDim2.new(0, 16, 0, 29)
-    v.BackgroundTransparency = 1
-    v.TextXAlignment = Enum.TextXAlignment.Left
-    v.Text = formatNumber(data.value or 0) .. " // " .. (data.tier or "")
-    v.Font = Enum.Font.GothamMedium
-    v.TextSize = 10
-    v.TextColor3 = T.TextDim
-    v.TextTransparency = 1
-    
-    local jn = Instance.new("TextButton", f)
-    jn.Size = UDim2.new(0, 60, 0, 26)
-    jn.Position = UDim2.new(1, -75, 0.5, -13)
-    jn.BackgroundColor3 = T.Accent1
-    jn.BackgroundTransparency = 1
-    jn.Text = "SPAM"
-    jn.Font = Enum.Font.GothamBlack
-    jn.TextSize = 10
-    jn.TextColor3 = T.White
-    jn.TextTransparency = 1
-    Instance.new("UICorner", jn).CornerRadius = UDim.new(1, 0)
-
-    local function doJoin()
-        if data.job_id then 
-            performJoinSpam(data.job_id)
-            jn.Text = "..."
-        end
-    end
-    f.MouseButton1Click:Connect(doJoin)
-    jn.MouseButton1Click:Connect(doJoin)
-    
-    TweenService:Create(f, TweenInfo.new(0.35), {BackgroundTransparency = 0.05}):Play()
-    TweenService:Create(nStroke, TweenInfo.new(0.35), {Transparency = 0.5}):Play()
-    TweenService:Create(bar, TweenInfo.new(0.35), {BackgroundTransparency = 0}):Play()
-    TweenService:Create(t, TweenInfo.new(0.35), {TextTransparency = 0}):Play()
-    TweenService:Create(v, TweenInfo.new(0.35), {TextTransparency = 0}):Play()
-    TweenService:Create(jn, TweenInfo.new(0.35), {TextTransparency = 0, BackgroundTransparency = 0}):Play()
-    
-    task.delay(4.5, function()
-        if f and f.Parent then
-            TweenService:Create(f, TweenInfo.new(0.3), {BackgroundTransparency = 1}):Play()
-            TweenService:Create(nStroke, TweenInfo.new(0.3), {Transparency = 1}):Play()
-            TweenService:Create(bar, TweenInfo.new(0.3), {BackgroundTransparency = 1}):Play()
-            TweenService:Create(t, TweenInfo.new(0.3), {TextTransparency = 1}):Play()
-            TweenService:Create(v, TweenInfo.new(0.3), {TextTransparency = 1}):Play()
-            local fo = TweenService:Create(jn, TweenInfo.new(0.3), {TextTransparency = 1, BackgroundTransparency = 1})
-            fo:Play()
-            fo.Completed:Connect(function() f:Destroy() end)
-        end
-    end)
-end
-
--- ═══════════════════════════════════
--- DATA FETCHING (FIXED FIRST RUN)
--- ═══════════════════════════════════
-_G.LacedRunning = true
-local URL = "https://ws.vanishnotifier.org/recent"
-local seenIds = {}
-local isFirstRun = true 
-
-local function handleData(findings)
-    local newFindings = {}
-    for _, d in ipairs(findings) do
-        if not seenIds[d.id] then
-            seenIds[d.id] = true
-            table.insert(newFindings, d)
-        end
-    end
-    table.sort(newFindings, function(a, b) return a.id < b.id end)
-    
-    -- AU PREMIER LANCEMENT : Remplit la liste sans bruit
-    if isFirstRun then
-        isFirstRun = false
-        for _, d in ipairs(newFindings) do
-            if userSettings[d.tier] then
-                addLogEntry(d, false) 
-            end
-        end
+-- Animation loop
+local rot = 0
+local borderAnim
+borderAnim = RunService.RenderStepped:Connect(function()
+    if not main or not main.Parent then
+        borderAnim:Disconnect() -- Sécurité anti-lag si tu supprimes le GUI
         return
     end
-    
-    -- LES FOIS SUIVANTES
-    for _, d in ipairs(newFindings) do
-        if userSettings[d.tier] then
-            addLogEntry(d, true) 
-            pushNotification(d) 
-            
-            if userSettings.AutoJoin and d.job_id then
-                local passesWhitelist = true
-                if userSettings.UseWhitelist then
-                    if not d.base_name or not userSettings.Whitelist[d.base_name] then
-                        passesWhitelist = false
-                    end
-                end
-                
-                if passesWhitelist then
-                    performJoinSpam(d.job_id)
-                end
-            end
-        end
+    rot = (rot + 1.5) % 360
+    strokeGradient.Rotation = rot
+end)
+
+-- ==========================================
+-- HEADER & CONTENT
+-- ==========================================
+local header = Instance.new("Frame", main)
+header.Size = UDim2.new(1, 0, 0, 45)
+header.BackgroundColor3 = T.BgDark
+header.BackgroundTransparency = 0.2
+header.BorderSizePixel = 0
+Instance.new("UICorner", header).CornerRadius = UDim.new(0, 10)
+
+local title = Instance.new("TextLabel", header)
+title.Size = UDim2.new(1, -30, 1, 0)
+title.Position = UDim2.fromOffset(20, 0)
+title.BackgroundTransparency = 1
+title.Text = "🔥 SCRULI HUB"
+title.Font = Enum.Font.GothamBlack
+title.TextSize = 18
+title.TextColor3 = T.OrangeMain
+title.TextXAlignment = Enum.TextXAlignment.Left
+
+local sep = Instance.new("Frame", header)
+sep.Size = UDim2.new(1, 0, 0, 1)
+sep.Position = UDim2.new(0, 0, 1, 0)
+sep.BackgroundColor3 = T.BgCard
+sep.BorderSizePixel = 0
+
+local content = Instance.new("Frame", main)
+content.Size = UDim2.new(1, 0, 1, -45)
+content.Position = UDim2.fromOffset(0, 45)
+content.BackgroundTransparency = 1
+
+local layout = Instance.new("UIListLayout", content)
+layout.SortOrder = Enum.SortOrder.LayoutOrder
+layout.Padding = UDim.new(0, 12)
+layout.HorizontalAlignment = Enum.HorizontalAlignment.Center
+
+local padding = Instance.new("UIPadding", content)
+padding.PaddingTop = UDim.new(0, 15)
+
+-- ==========================================
+-- 🖱️ SMOOTH DRAGGING LOGIC
+-- ==========================================
+local dragging, dragInput, dragStart, startPos
+header.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        dragging = true
+        dragStart = input.Position
+        startPos = main.Position
+        input.Changed:Connect(function()
+            if input.UserInputState == Enum.UserInputState.End then dragging = false end
+        end)
     end
+end)
+header.InputChanged:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
+        dragInput = input
+    end
+end)
+UIS.InputChanged:Connect(function(input)
+    if input == dragInput and dragging then
+        local delta = input.Position - dragStart
+        main.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+    end
+end)
+
+-- ==========================================
+-- 🎛️ STYLIZED TOGGLE CREATOR
+-- ==========================================
+local function createToggle(text, callback)
+    local state = false
+    local holder = Instance.new("Frame", content)
+    holder.Size = UDim2.new(1, -40, 0, 42)
+    holder.BackgroundColor3 = T.BgCard
+    Instance.new("UICorner", holder).CornerRadius = UDim.new(0, 8)
+
+    local lbl = Instance.new("TextLabel", holder)
+    lbl.Size = UDim2.new(0.7, 0, 1, 0)
+    lbl.Position = UDim2.fromOffset(15, 0)
+    lbl.BackgroundTransparency = 1
+    lbl.Text = text
+    lbl.Font = Enum.Font.GothamBold
+    lbl.TextSize = 13
+    lbl.TextColor3 = T.TextWhite
+    lbl.TextXAlignment = Enum.TextXAlignment.Left
+
+    local switch = Instance.new("Frame", holder)
+    switch.Size = UDim2.fromOffset(44, 22)
+    switch.Position = UDim2.new(1, -59, 0.5, -11)
+    switch.BackgroundColor3 = T.BgDark
+    Instance.new("UICorner", switch).CornerRadius = UDim.new(1, 0)
+    
+    local switchStroke = Instance.new("UIStroke", switch)
+    switchStroke.Color = T.OrangeDim
+    switchStroke.Thickness = 1.5
+
+    local dot = Instance.new("Frame", switch)
+    dot.Size = UDim2.fromOffset(16, 16)
+    dot.Position = UDim2.new(0, 3, 0.5, -8)
+    dot.BackgroundColor3 = T.TextGray
+    Instance.new("UICorner", dot).CornerRadius = UDim.new(1, 0)
+
+    local btn = Instance.new("TextButton", holder)
+    btn.Size = UDim2.new(1, 0, 1, 0)
+    btn.BackgroundTransparency = 1
+    btn.Text = ""
+
+    btn.MouseEnter:Connect(function()
+        TweenService:Create(holder, fastTween, {BackgroundColor3 = T.BgHover}):Play()
+    end)
+    btn.MouseLeave:Connect(function()
+        TweenService:Create(holder, fastTween, {BackgroundColor3 = T.BgCard}):Play()
+    end)
+
+    btn.MouseButton1Click:Connect(function()
+        state = not state
+        callback(state)
+        
+        local goalDot = state and UDim2.new(1, -19, 0.5, -8) or UDim2.new(0, 3, 0.5, -8)
+        local goalColor = state and T.TextWhite or T.TextGray
+        local goalStroke = state and T.OrangeGlow or T.OrangeDim
+
+        TweenService:Create(dot, fastTween, {Position = goalDot, BackgroundColor3 = goalColor}):Play()
+        TweenService:Create(switchStroke, fastTween, {Color = goalStroke}):Play()
+    end)
 end
 
-task.spawn(function()
-    while _G.LacedRunning do
-        pcall(function()
-            local reqUrl = URL .. "?t=" .. tostring(tick())
-            local headers = {["Cache-Control"]="no-cache",["User-Agent"]="Roblox/LacedUI"}
-            local response
-            if syn and syn.request then response = syn.request({Url=reqUrl,Method="GET",Headers=headers})
-            elseif request then response = request({Url=reqUrl,Method="GET",Headers=headers})
-            elseif http_request then response = http_request({Url=reqUrl,Method="GET",Headers=headers})
-            else response = {Body = game:HttpGet(reqUrl, true)} end
-            
-            if response and response.Body then
-                local res = HttpService:JSONDecode(response.Body)
-                if res and res.ok and res.findings then handleData(res.findings) end
-            end
-        end)
-        task.wait(1.5)
-    end
-end)
+-- ==========================================
+-- 🎚️ STYLIZED SLIDER CREATOR
+-- ==========================================
+local function createSlider(text, min, max, default, callback)
+    local holder = Instance.new("Frame", content)
+    holder.Size = UDim2.new(1, -40, 0, 50)
+    holder.BackgroundColor3 = T.BgDark
+    holder.BackgroundTransparency = 1
 
-task.spawn(function()
-    while _G.LacedRunning do
-        local now = math.floor(os.time())
-        for i = #activeLogs, 1, -1 do
-            local ld = activeLogs[i]
-            if not ld.label or not ld.label.Parent then table.remove(activeLogs, i)
-            else
-                local diff = math.max(0, now - ld.ts)
-                local tStr = diff < 60 and (diff.."s") or (diff < 3600 and math.floor(diff/60).."m" or math.floor(diff/3600).."h")
-                ld.label.Text = ld.baseStr .. " // " .. tStr
-            end
+    local lbl = Instance.new("TextLabel", holder)
+    lbl.Size = UDim2.new(1, 0, 0, 20)
+    lbl.BackgroundTransparency = 1
+    lbl.Text = text .. ": " .. default
+    lbl.Font = Enum.Font.GothamMedium
+    lbl.TextSize = 13
+    lbl.TextColor3 = T.TextGray
+    lbl.TextXAlignment = Enum.TextXAlignment.Left
+
+    local barBg = Instance.new("Frame", holder)
+    barBg.Size = UDim2.new(1, 0, 0, 6)
+    barBg.Position = UDim2.new(0, 0, 0, 32)
+    barBg.BackgroundColor3 = T.BgCard
+    Instance.new("UICorner", barBg).CornerRadius = UDim.new(1, 0)
+
+    local barFill = Instance.new("Frame", barBg)
+    local startPct = (default - min) / (max - min)
+    barFill.Size = UDim2.fromScale(startPct, 1)
+    barFill.BackgroundColor3 = T.OrangeMain
+    Instance.new("UICorner", barFill).CornerRadius = UDim.new(1, 0)
+    
+    local fillGradient = Instance.new("UIGradient", barFill)
+    fillGradient.Color = ColorSequence.new{
+        ColorSequenceKeypoint.new(0, T.OrangeDim),
+        ColorSequenceKeypoint.new(1, T.OrangeGlow)
+    }
+
+    local knob = Instance.new("Frame", barFill)
+    knob.Size = UDim2.fromOffset(14, 14)
+    knob.AnchorPoint = Vector2.new(0.5, 0.5)
+    knob.Position = UDim2.new(1, 0, 0.5, 0)
+    knob.BackgroundColor3 = T.TextWhite
+    Instance.new("UICorner", knob).CornerRadius = UDim.new(1, 0)
+
+    local btn = Instance.new("TextButton", barBg)
+    btn.Size = UDim2.new(1, 0, 1, 20)
+    btn.Position = UDim2.fromOffset(0, -10)
+    btn.BackgroundTransparency = 1
+    btn.Text = ""
+
+    local isDraggingSlider = false
+    local function update(input)
+        local pos = math.clamp((input.Position.X - barBg.AbsolutePosition.X) / barBg.AbsoluteSize.X, 0, 1)
+        barFill.Size = UDim2.fromScale(pos, 1)
+        local val = math.floor(min + ((max - min) * pos))
+        lbl.Text = text .. ": " .. val
+        lbl.TextColor3 = T.TextWhite
+        callback(val)
+    end
+
+    btn.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            isDraggingSlider = true
+            TweenService:Create(knob, fastTween, {Size = UDim2.fromOffset(18, 18)}):Play()
+            update(input)
         end
-        task.wait(1)
-    end
-end) 
+    end)
+    btn.InputEnded:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            isDraggingSlider = false
+            TweenService:Create(knob, fastTween, {Size = UDim2.fromOffset(14, 14)}):Play()
+            lbl.TextColor3 = T.TextGray
+        end
+    end)
+    UIS.InputChanged:Connect(function(input)
+        if isDraggingSlider and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+            update(input)
+        end
+    end)
+end
 
--- Boucle de nettoyage FORCÉE (Toujours active)
-task.spawn(function()
-    while task.wait(0.5) do
-        if _G.LacedRunning == false then break end -- S'arrête si tu fermes le hub
-        
-        pcall(function()
-            -- 1. Nettoie l'interface d'erreur native de Roblox
-            local coreGui = game:GetService("CoreGui")
-            local rPrompt = coreGui:FindFirstChild("RobloxPromptGui")
-            if rPrompt then
-                local overlay = rPrompt:FindFirstChild("promptOverlay")
-                if overlay then
-                    local errPrompt = overlay:FindFirstChild("ErrorPrompt")
-                    if errPrompt then errPrompt.Visible = false end
-                end
-            end
+-- ==========================================
+-- ⚙️ MECHANICS (LAG & SPEED)
+-- ==========================================
+local isLagOn = false
+local isSpeedOn = false
+local lagAmount = 0
+local speedAmount = 16
 
-            -- 2. Nettoie les MessageDialog du jeu
-            local pGui = game:GetService("Players").LocalPlayer:FindFirstChild("PlayerGui")
-            if pGui then
-                local msg = pGui:FindFirstChild("MessageDialog")
-                if msg then msg.Visible = false end
-            end
+createToggle("Enable Lag Switch", function(state) isLagOn = state end)
+createToggle("Enable Speed Hack", function(state) isSpeedOn = state end)
 
-            -- 3. Reset l'état d'erreur du moteur
-            game:GetService("GuiService"):ClearError()
-        end)
+createSlider("Lag Intensity", 0, 100, 0, function(val) lagAmount = val end)
+createSlider("Speed Multiplier", 16, 150, 16, function(val) speedAmount = val end)
+
+-- SECURE SPEED HACK
+RunService.RenderStepped:Connect(function()
+    local char = player.Character
+    if char and isSpeedOn then
+        local root = char:FindFirstChild("HumanoidRootPart")
+        local hum = char:FindFirstChildOfClass("Humanoid")
+
+        if root and hum and hum.MoveDirection.Magnitude > 0 then
+            local dir = hum.MoveDirection.Unit
+            local velY = root.AssemblyLinearVelocity.Y
+            root.AssemblyLinearVelocity = Vector3.new(dir.X * speedAmount, velY, dir.Z * speedAmount)
+        end
     end
 end)
+
+-- SECURE LAG SWITCH
+RunService.RenderStepped:Connect(function()
+    if isLagOn and lagAmount > 0 then
+        local t = tick()
+        local blockTime = math.clamp(lagAmount * 0.0015, 0, 0.15) 
+        while tick() - t < blockTime do end
+    end
+end)
+print("67")
