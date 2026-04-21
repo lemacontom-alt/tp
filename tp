@@ -1,6 +1,6 @@
 -- ╔══════════════════════════════════════════╗
--- ║         SCRULI NOTIFIER V5               ║
--- ║   Pro Edition • Midnight Cyan Theme      ║
+-- ║         SCRULI NOTIFIER V9               ║
+-- ║   Apex Edition • Flawless UI & Logic     ║
 -- ╚══════════════════════════════════════════╝
 
 
@@ -18,96 +18,51 @@ local PLACE_ID  = 109983668079237
 local SAVE_FILE = "ScruliNotifier.json"
 local SOUND_ID  = 139308638407157
 
--- ─────────────────────────────────────────────
--- SOUND PLAYER
--- ─────────────────────────────────────────────
 local function playNotificationSound()
     local sound = Instance.new("Sound")
     sound.SoundId = "rbxassetid://" .. SOUND_ID
     sound.Volume = 0.5
     sound.Parent = SoundService
     sound:Play()
-    sound.Ended:Connect(function()
-        sound:Destroy()
-    end)
-    task.delay(5, function()
-        if sound and sound.Parent then sound:Destroy() end
-    end)
+    sound.Ended:Connect(function() sound:Destroy() end)
+    task.delay(5, function() if sound and sound.Parent then sound:Destroy() end end)
 end
 
 -- ─────────────────────────────────────────────
 -- BRAINROT LIST (Avec filtre Anti-Doublons)
 -- ─────────────────────────────────────────────
 local RAW_BRAINROTS = {
-    -- Ancienne Liste
-    "Noobini Pizzanini","Lirili Larila","Tim Cheese","FluriFlura","Talpa Di Fero",
-    "Svinina Bombardino","Pipi Kiwi","Racooni Jandelini","Pipi Corni","Noobini Santanini",
-    "Trippi Troppi","Gangster Footera","Bandito Bobritto","Boneca Ambalabu",
-    "Cacto Hipopotamo","Ta Ta Ta Ta Sahur","Tric Trac Baraboom","Pipi Avocado","Frogo Elfo",
-    "Cappuccino Assassino","Brr Brr Patapim","Trulimero Trulicina","Bambini Crostini",
-    "Bananita Dolphinita","Perochello Lemonchello","Brri Brri Bicus Dicus Bombicus",
-    "Avocadini Guffo","Salamino Penguino","Ti Ti Ti Sahur","Penguin Tree","Penguino Cocosino",
-    "Burbaloni Loliloli","Chimpazini Bananini","Ballerina Cappuccina","Chef Crabracadabra",
-    "Lionel Cactuseli","Glorbo Fruttodrillo","Blueberrini Octopusini","Strawberelli Flamingelli",
-    "Pandaccini Bananini","Cocosini Mama","Sigma Boy","Sigma Girl","Pi Pi Watermelon",
-    "Chocco Bunny","Sealo Regalo","Frigo Camelo","Orangutini Ananassini","Rhino Toasterino",
-    "Bombardiro Crocodilo","Bombombini Gusini","Cavallo Virtuso","Gorillo Watermelondrillo",
-    "Avocadorilla","Tob Tobi Tobi","Ganganzelli Trulala","Cachorrito Melonito","Elefanto Frigo",
-    "Toiletto Focaccino","Te Te Te Sahur","Tracoducotulu Delapeladustuz","Lerulerulerule",
-    "Jingle Jingle Sahur","Tree Tree Tree Sahur","Carloo","Spioniro Golubiro",
-    "Zibra Zubra Zibralini","Tigrilini Watermelini","Carrotini Brainini","Bananito Bandito",
-    "Coco Elefanto","Girafa Celestre","Gattatino Nyanino","Chihuanini Taconini","Matteo",
-    "Tralalero Tralala","Espresso Signora","Odin Din Din Dun","Statutino Libertino",
-    "Trenostruzzo Turbo 3000","Ballerino Lololo","Los Orcalitos","Dug dug dug",
-    "Tralalita Tralala","Urubini Flamenguini","Los Bombinitos","Trigoligre Frutonni",
-    "Orcalero Orcala","Bulbito Bandito Traktorito","Los Crocodillitos","Piccione Macchina",
-    "Trippi Troppi Troppa Trippa","Los Tungtungtungcitos","Tukanno Bananno","Alessio",
-    "Tipi Topi Taco","Extinct Ballerina","Capi Taco","Gattito Tacoto","Pakrahmatmamat",
-    "Tractoro Dinosauro","Corn Corn Corn Sahur","Squalanana","Los Tipi Tacos",
-    "Bombardini Tortinii","Pop pop Sahur","Ballerina Peppermintina","Yeti Claus",
-    "Ginger Globo","Frio Ninja","Ginger Cisterna","Cacasito Satalito","Aquanaut",
-    "Tartaruga Cisterna","Las Sis","La Vacca Staturno Saturnita","Chimpanzini Spiderini",
-    "Extinct Tralalero","Extinct Matteo","Los Tralaleritos","La Karkerkar Kombinasin",
-    "Karker Sahur","Las Tralaleritas","Job Job Job Sahur","Los Spyderrinis","Perrito Burrito",
-    "Graipuss Medussi","Los Jobcitos","La Grande Kombinasin","Tacorita Bicicleta",
-    "Nuclearo Dinossauro","Los 67","Money Money Puggy","Chillin Chili","La Extinct Grande",
-    "Los Tacoritas","Los Tortus","Tang Tang Kelentang","Garama and Madundung",
-    "La Secret Kombinasin","Torrtuginni Dragonfruitini","Pot Hotspot","To to to Sahur",
-    "Las Vaquitas Saturnitas","Chicleteira Bicicleteira","Agarrini la Palini",
-    "Mariachi Corazoni","Dragon Cannelloni","Los Kombinasinas","La Cucaracha",
-    "Karkerkar Kurkur","Los Hotspotsitos","La Sahur Kombinasin","Quesadilla Crocodila",
-    "Esok Sekolah","Los Matteos","Dul Dul Dul","Blackhole Goat","Nooo My Hotspot",
-    "Sammyini Spyderini","Spaghetti Tualetti","67","Los Noo My Hotspotsitos",
-    "Celularcini Viciosini","Tralaledon","Tictac Sahur","La Supreme Kombinasin",
-    "Ketupat Kepat","Ketchuru and Musturu","Burguro and Fryuro","Please my Present",
-    "La Grande","La Vacca Prese Presente","Ho Ho Ho Sahur","Chicleteira Noelteira",
-    "Cooki and Milki","La Jolly Grande","Capitano Moby","Cerberus",
-    "Skibidi Toilet","Strawberry Elephant","Meowl",
-
-    -- Nouvelle Liste Ajoutée
-    "Sammyni Fattini","Rosetti Tualetti","Foxini Lanternini","Reighnito sleghito","Ventoliero Pavonero",
-    "La Casa Boo","","Lavadorito spinito","Racooni Jandelini","Cash or Card","Dug dug dug",
-    "Las Sis","Esok Sekhola","Nacho Spyder","Los Jolly Combinasionas","Tacorita Bicicleta",
-    "Festif 67","Antonio","Nuclearo Dinossauro","Los 67","Money Money Puggy","Chillin Chili",
-    "La Extinct Grande","Los Tacoritas","Dragon Gingerini","Tang Tang Kelentang","Garama and Madundung",
-    "La Secret Combinasin","Gold Gold Gold","Lovin Rose","Swaggy Bros","La Taco Combinaison",
-    "Lucky Grande","La Spookie Grande","Agarrini la Palini","Tuff toucan","La extinct Grande",
-    "La Ginger Sekolah","Baccuru and Egguru","Los Puggies","La Extinct Grande","Mariachi Corazoni",
-    "Dragon Cannelloni","Los Kombinasinas","Hydra Dragon Cannelloni","Fragole La La La",
-    "Fishino Clownino","Los Hotspotsitos","La Sahur Kombinasin","Quesadilla Crocodila",
-    "Gobbino Uniciclino","Gym Bros","Los Cupids","Esok Sekolah","Popcuru and Fizzuru",
-    "Fragrama and Chococrama","Jolly sahur","Chicleteira Noelteira","Ginger Gerat","Orcaledon",
-    "Los Amigos","Evildon","Los bros","Los candies","Los primos","Dj Panda","Snailo Clovero",
-    "Spinny Hammy","67","Money Money reindeer","Signo Carapace","Spaghetti Tualetti","Swag soda","",
-    "Celularcini Viciosini","Tralaledon","W or L","Tictac Sahur","La Jolly Grande","Cigno fulgoro",
-    "Los sweehearts","No My gold","Tacorillo Crocodillo","Chimino","No my candis","Los Planitos",
-    "Ketupat Kepat","Ketchuru and Musturu","Burguro and Fryuro","Ketupat bros","Elefanto Frigo",
-    "Boppin Bunny","Hydra Bunny","Celestial Pegasus","Cooki and Milki","Love Love Bear","Griffin",
-    "Bunny and Eggy","Capitano Moby","Cerberus","Skibidi Toilet","Rosey And Teddy",
-    "Strawberry Elephant","Meowl","La Supreme Combinasion"
+    "Noobini Pizzanini","Lirili Larila","Tim Cheese","FluriFlura","Talpa Di Fero","Svinina Bombardino","Pipi Kiwi","Racooni Jandelini","Pipi Corni","Noobini Santanini",
+    "Trippi Troppi","Gangster Footera","Bandito Bobritto","Boneca Ambalabu","Cacto Hipopotamo","Ta Ta Ta Ta Sahur","Tric Trac Baraboom","Pipi Avocado","Frogo Elfo",
+    "Cappuccino Assassino","Brr Brr Patapim","Trulimero Trulicina","Bambini Crostini","Bananita Dolphinita","Perochello Lemonchello","Brri Brri Bicus Dicus Bombicus",
+    "Avocadini Guffo","Salamino Penguino","Ti Ti Ti Sahur","Penguin Tree","Penguino Cocosino","Burbaloni Loliloli","Chimpazini Bananini","Ballerina Cappuccina",
+    "Chef Crabracadabra","Lionel Cactuseli","Glorbo Fruttodrillo","Blueberrini Octopusini","Strawberelli Flamingelli","Pandaccini Bananini","Cocosini Mama",
+    "Sigma Boy","Sigma Girl","Pi Pi Watermelon","Chocco Bunny","Sealo Regalo","Frigo Camelo","Orangutini Ananassini","Rhino Toasterino","Bombardiro Crocodilo",
+    "Bombombini Gusini","Cavallo Virtuso","Gorillo Watermelondrillo","Avocadorilla","Tob Tobi Tobi","Ganganzelli Trulala","Cachorrito Melonito","Elefanto Frigo",
+    "Toiletto Focaccino","Te Te Te Sahur","Tracoducotulu Delapeladustuz","Lerulerulerule","Jingle Jingle Sahur","Tree Tree Tree Sahur","Carloo","Spioniro Golubiro",
+    "Zibra Zubra Zibralini","Tigrilini Watermelini","Carrotini Brainini","Bananito Bandito","Coco Elefanto","Girafa Celestre","Gattatino Nyanino","Chihuanini Taconini",
+    "Matteo","Tralalero Tralala","Espresso Signora","Odin Din Din Dun","Statutino Libertino","Trenostruzzo Turbo 3000","Ballerino Lololo","Los Orcalitos","Dug dug dug",
+    "Tralalita Tralala","Urubini Flamenguini","Los Bombinitos","Trigoligre Frutonni","Orcalero Orcala","Bulbito Bandito Traktorito","Los Crocodillitos","Piccione Macchina",
+    "Trippi Troppi Troppa Trippa","Los Tungtungtungcitos","Tukanno Bananno","Alessio","Tipi Topi Taco","Extinct Ballerina","Capi Taco","Gattito Tacoto","Pakrahmatmamat",
+    "Tractoro Dinosauro","Corn Corn Corn Sahur","Squalanana","Los Tipi Tacos","Bombardini Tortinii","Pop pop Sahur","Ballerina Peppermintina","Yeti Claus",
+    "Ginger Globo","Frio Ninja","Ginger Cisterna","Cacasito Satalito","Aquanaut","Tartaruga Cisterna","Las Sis","La Vacca Staturno Saturnita","Chimpanzini Spiderini",
+    "Extinct Tralalero","Extinct Matteo","Los Tralaleritos","La Karkerkar Kombinasin","Karker Sahur","Las Tralaleritas","Job Job Job Sahur","Los Spyderrinis",
+    "Perrito Burrito","Graipuss Medussi","Los Jobcitos","La Grande Kombinasin","Tacorita Bicicleta","Nuclearo Dinossauro","Los 67","Money Money Puggy","Chillin Chili",
+    "La Extinct Grande","Los Tacoritas","Los Tortus","Tang Tang Kelentang","Garama and Madundung","La Secret Kombinasin","Torrtuginni Dragonfruitini","Pot Hotspot",
+    "To to to Sahur","Las Vaquitas Saturnitas","Chicleteira Bicicleteira","Agarrini la Palini","Mariachi Corazoni","Dragon Cannelloni","Los Kombinasinas","La Cucaracha",
+    "Karkerkar Kurkur","Los Hotspotsitos","La Sahur Kombinasin","Quesadilla Crocodila","Esok Sekolah","Los Matteos","Dul Dul Dul","Blackhole Goat","Nooo My Hotspot",
+    "Sammyini Spyderini","Spaghetti Tualetti","67","Los Noo My Hotspotsitos","Celularcini Viciosini","Tralaledon","Tictac Sahur","La Supreme Kombinasin","Ketupat Kepat",
+    "Ketchuru and Musturu","Burguro and Fryuro","Please my Present","La Grande","La Vacca Prese Presente","Ho Ho Ho Sahur","Chicleteira Noelteira","Cooki and Milki",
+    "La Jolly Grande","Capitano Moby","Cerberus","Skibidi Toilet","Strawberry Elephant","Meowl",
+    "Sammyni Fattini","Rosetti Tualetti","Foxini Lanternini","Reighnito sleghito","Ventoliero Pavonero","La Casa Boo","Lavadorito spinito","Cash or Card",
+    "Esok Sekhola","Nacho Spyder","Los Jolly Combinasionas","Festif 67","Antonio","Dragon Gingerini","Gold Gold Gold","Lovin Rose","Swaggy Bros","La Taco Combinaison",
+    "Lucky Grande","La Spookie Grande","Tuff toucan","La extinct Grande","La Ginger Sekolah","Baccuru and Egguru","Los Puggies","Hydra Dragon Cannelloni","Fragole La La La",
+    "Fishino Clownino","Gobbino Uniciclino","Gym Bros","Los Cupids","Popcuru and Fizzuru","Fragrama and Chococrama","Jolly sahur","Ginger Gerat","Orcaledon",
+    "Los Amigos","Evildon","Los bros","Los candies","Los primos","Dj Panda","Snailo Clovero","Spinny Hammy","Money Money reindeer","Signo Carapace","Swag soda",
+    "W or L","Cigno fulgoro","Los sweehearts","No My gold","Tacorillo Crocodillo","Chimino","No my candis","Los Planitos","Ketupat bros","Boppin Bunny","Hydra Bunny",
+    "Celestial Pegasus","Love Love Bear","Griffin","Bunny and Eggy","Rosey And Teddy","La Supreme Combinasion","big dick"
 }
 
--- Anti-Doublons & Suppression des champs vides
 local ALL_BRAINROTS = {}
 local _seen = {}
 for _, br in ipairs(RAW_BRAINROTS) do
@@ -133,12 +88,8 @@ local cfg = {
 }
 
 local moneyOptions = {
-    {label="None", value=0},
-    {label="10M",  value=10000000},
-    {label="20M",  value=20000000},
-    {label="30M",  value=30000000},
-    {label="40M",  value=40000000},
-    {label="50M",  value=50000000},
+    {label="None", value=0}, {label="10M",  value=10000000}, {label="20M",  value=20000000},
+    {label="30M",  value=30000000}, {label="40M",  value=40000000}, {label="50M",  value=50000000},
     {label="100M", value=100000000},
 }
 
@@ -159,7 +110,7 @@ cfg.autoJoin = false
 cfg.autoForceJoin = false
 
 -- ─────────────────────────────────────────────
--- HELPERS
+-- PARSER
 -- ─────────────────────────────────────────────
 local function fmtMoney(n)
     if n >= 1e9  then return string.format("$%.2fB", n/1e9)
@@ -180,9 +131,6 @@ local function namePassesWhitelist(name)
     return false
 end
 
--- ─────────────────────────────────────────────
--- DUAL FORMAT PARSER
--- ─────────────────────────────────────────────
 local function isBase64(s)
     if type(s) ~= "string" or #s == 0 then return false end
     if #s % 4 ~= 0 then return false end
@@ -272,48 +220,44 @@ local function parseMsg(raw)
 end
 
 -- ─────────────────────────────────────────────
--- V5 PRO UI COLOURS (MIDNIGHT CYAN / AZURE)
+-- V9 APEX COLOURS (ULTRA DEEP & CLEAN)
 -- ─────────────────────────────────────────────
 local C = {
-    bg      = Color3.fromRGB(15, 16, 20),   -- Midnight Dark
-    sidebar = Color3.fromRGB(20, 22, 28),   -- Elevated Dark
-    card    = Color3.fromRGB(26, 28, 36),   -- Card background
-    deep    = Color3.fromRGB(10, 11, 14),   -- Deepest inputs
-    stroke  = Color3.fromRGB(45, 48, 60),   -- Clean border stroke
+    bg      = Color3.fromRGB(11, 12, 16),   
+    sidebar = Color3.fromRGB(16, 17, 22),   
+    card    = Color3.fromRGB(22, 23, 29),   
+    deep    = Color3.fromRGB(8, 9, 12),     
+    stroke  = Color3.fromRGB(38, 40, 50),   
     
-    accent  = Color3.fromRGB(0, 220, 255),  -- Electric Cyan
-    accentD = Color3.fromRGB(0, 130, 255),  -- Deep Azure
-    accentL = Color3.fromRGB(120, 240, 255),-- Light Cyan
+    accent  = Color3.fromRGB(110, 60, 255), 
+    accentD = Color3.fromRGB(0, 180, 255),  
     
     tPrim   = Color3.fromRGB(245, 245, 255),
-    tSec    = Color3.fromRGB(170, 175, 190),
-    tMut    = Color3.fromRGB(110, 115, 130),
+    tSec    = Color3.fromRGB(150, 155, 170),
+    tMut    = Color3.fromRGB(90, 95, 110),
     
-    green   = Color3.fromRGB(20, 220, 120), 
+    green   = Color3.fromRGB(30, 210, 120), 
     red     = Color3.fromRGB(255, 60, 90),  
     yellow  = Color3.fromRGB(255, 190, 40), 
     gold    = Color3.fromRGB(255, 215, 0),  
     
-    rowHov  = Color3.fromRGB(32, 35, 45),   
-    logBg   = Color3.fromRGB(18, 20, 26),   
+    rowHov  = Color3.fromRGB(26, 28, 35),   
+    logBg   = Color3.fromRGB(14, 15, 20),   
 }
 
 -- ─────────────────────────────────────────────
--- CLEANUP
+-- CLEANUP & UI CORE
 -- ─────────────────────────────────────────────
-if CoreGui:FindFirstChild("ScruliV5") then
-    CoreGui:FindFirstChild("ScruliV5"):Destroy()
+if CoreGui:FindFirstChild("ScruliV9") then
+    CoreGui:FindFirstChild("ScruliV9"):Destroy()
 end
 
 local SG = Instance.new("ScreenGui")
-SG.Name = "ScruliV5"
+SG.Name = "ScruliV9"
 SG.ResetOnSpawn = false
 SG.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 SG.Parent = CoreGui
 
--- ─────────────────────────────────────────────
--- TOAST (PREMIUM SLIDE)
--- ─────────────────────────────────────────────
 local toastSlot = 0
 local function showToast(name, money, isGold)
     if not cfg.toastEnabled then return end
@@ -321,7 +265,7 @@ local function showToast(name, money, isGold)
     
     toastSlot += 1
     local yOff = 20 + (toastSlot-1)*85
-    local col  = isGold and C.gold or C.accent
+    local col  = isGold and C.gold or C.accentD
     local bg   = C.sidebar
 
     local T = Instance.new("Frame")
@@ -340,7 +284,7 @@ local function showToast(name, money, isGold)
     local bGrad = Instance.new("UIGradient")
     bGrad.Color = ColorSequence.new({
         ColorSequenceKeypoint.new(0, col),
-        ColorSequenceKeypoint.new(1, isGold and Color3.fromRGB(255,160,0) or C.accentD)
+        ColorSequenceKeypoint.new(1, isGold and Color3.fromRGB(255,160,0) or C.accent)
     })
     bGrad.Rotation = 90
     bGrad.Parent = bar
@@ -356,42 +300,37 @@ local function showToast(name, money, isGold)
     tl(name, 26, 14, Enum.Font.GothamBold, C.tPrim)
     tl(fmtMoney(money), 46, 12, Enum.Font.GothamMedium, C.tSec)
 
-    TweenService:Create(T,TweenInfo.new(0.5,Enum.EasingStyle.Quint,Enum.EasingDirection.Out),
-        {Position=UDim2.new(1,-320,0,yOff)}):Play()
+    TweenService:Create(T,TweenInfo.new(0.5,Enum.EasingStyle.Quint,Enum.EasingDirection.Out), {Position=UDim2.new(1,-320,0,yOff)}):Play()
         
     task.delay(4.5,function()
-        local o=TweenService:Create(T,TweenInfo.new(0.4,Enum.EasingStyle.Quint,Enum.EasingDirection.In),
-            {Position=UDim2.new(1,20,0,yOff)})
-        o:Play(); o.Completed:Connect(function()
-            T:Destroy(); toastSlot=math.max(0,toastSlot-1)
-        end)
+        local o=TweenService:Create(T,TweenInfo.new(0.4,Enum.EasingStyle.Quint,Enum.EasingDirection.In), {Position=UDim2.new(1,20,0,yOff)})
+        o:Play(); o.Completed:Connect(function() T:Destroy(); toastSlot=math.max(0,toastSlot-1) end)
     end)
 end
 
 -- ─────────────────────────────────────────────
--- ROOT (V5 GLASSMORPHISM TWEAK)
+-- ROOT (APEX DESIGN)
 -- ─────────────────────────────────────────────
 local Root=Instance.new("Frame")
-Root.Name="Root"; Root.Size=UDim2.new(0,820,0,500)
-Root.Position=UDim2.new(0.5,-410,0.5,-250)
+Root.Name="Root"; Root.Size=UDim2.new(0,840,0,520)
+Root.Position=UDim2.new(0.5,-420,0.5,-260)
 Root.BackgroundColor3=C.bg; Root.BorderSizePixel=0
 Root.Active=true; Root.Draggable=true; Root.Parent=SG
-Instance.new("UICorner",Root).CornerRadius=UDim.new(0,14)
+Instance.new("UICorner",Root).CornerRadius=UDim.new(0,16)
 local rootSk=Instance.new("UIStroke"); rootSk.Color=C.stroke; rootSk.Thickness=1; rootSk.Parent=Root
 
--- Softer Drop Shadow
 local shadow = Instance.new("ImageLabel")
 shadow.AnchorPoint = Vector2.new(0.5, 0.5)
-shadow.Position = UDim2.new(0.5, 0, 0.5, 10)
-shadow.Size = UDim2.new(1, 60, 1, 60)
+shadow.Position = UDim2.new(0.5, 0, 0.5, 15)
+shadow.Size = UDim2.new(1, 80, 1, 80)
 shadow.BackgroundTransparency = 1
 shadow.Image = "rbxassetid://1316045217"
 shadow.ImageColor3 = Color3.fromRGB(0,0,0)
-shadow.ImageTransparency = 0.45
+shadow.ImageTransparency = 0.35
 shadow.ZIndex = -1
 shadow.Parent = Root
 
-local topLine=Instance.new("Frame"); topLine.Size=UDim2.new(1,0,0,2)
+local topLine=Instance.new("Frame"); topLine.Size=UDim2.new(1,0,0,3)
 topLine.Position=UDim2.new(0,0,0,0); topLine.BackgroundColor3=Color3.fromRGB(255,255,255)
 topLine.BorderSizePixel=0; topLine.Parent=Root
 Instance.new("UICorner",topLine).CornerRadius=UDim.new(1,0)
@@ -411,7 +350,7 @@ Pill.Name="Pill"; Pill.Size=UDim2.new(0,290,0,44)
 Pill.Position=UDim2.new(0.5,-145,1,-80)
 Pill.BackgroundColor3=C.sidebar; Pill.BorderSizePixel=0
 Pill.Visible=false; Pill.Active=true; Pill.Draggable=true; Pill.Parent=SG
-Instance.new("UICorner",Pill).CornerRadius=UDim.new(0,10)
+Instance.new("UICorner",Pill).CornerRadius=UDim.new(1,0)
 local pillSk=Instance.new("UIStroke"); pillSk.Color=C.stroke; pillSk.Thickness=1; pillSk.Parent=Pill
 
 local pillDot=Instance.new("Frame"); pillDot.Size=UDim2.new(0,8,0,8)
@@ -426,19 +365,17 @@ pillText.Font=Enum.Font.GothamMedium; pillText.TextXAlignment=Enum.TextXAlignmen
 pillText.Parent=Pill
 
 local pillExpandBtn=Instance.new("TextButton"); pillExpandBtn.Text="Open UI"
-pillExpandBtn.Size=UDim2.new(0,66,0,26); pillExpandBtn.Position=UDim2.new(1,-76,0.5,-13)
+pillExpandBtn.Size=UDim2.new(0,70,0,28); pillExpandBtn.Position=UDim2.new(1,-78,0.5,-14)
 pillExpandBtn.BackgroundColor3=C.card; pillExpandBtn.TextColor3=C.tPrim
 pillExpandBtn.TextSize=11; pillExpandBtn.Font=Enum.Font.GothamBold
 pillExpandBtn.BorderSizePixel=0; pillExpandBtn.Parent=Pill
-Instance.new("UICorner",pillExpandBtn).CornerRadius=UDim.new(0,6)
+Instance.new("UICorner",pillExpandBtn).CornerRadius=UDim.new(1,0)
 local pbtnSk=Instance.new("UIStroke"); pbtnSk.Color=C.stroke; pbtnSk.Parent=pillExpandBtn
 
 local minimized=false; local guiVisible=true
-
 local function setMinimized(v)
     minimized=v; Root.Visible=not v; Pill.Visible=v
 end
-
 pillExpandBtn.MouseButton1Click:Connect(function() setMinimized(false) end)
 
 UIS.InputBegan:Connect(function(inp,gpe)
@@ -450,55 +387,50 @@ UIS.InputBegan:Connect(function(inp,gpe)
 end)
 
 -- ─────────────────────────────────────────────
--- SIDEBAR
+-- SIDEBAR (TOTALEMENT RÉPARÉE POUR LES ONGLETS)
 -- ─────────────────────────────────────────────
-local Sidebar=Instance.new("Frame"); Sidebar.Size=UDim2.new(0,200,1,0)
+local Sidebar=Instance.new("Frame"); Sidebar.Size=UDim2.new(0,210,1,0)
 Sidebar.Position=UDim2.new(0,0,0,0) 
 Sidebar.BackgroundColor3=C.sidebar; Sidebar.BorderSizePixel=0; Sidebar.Parent=Root
-Instance.new("UICorner",Sidebar).CornerRadius=UDim.new(0,14)
+Instance.new("UICorner",Sidebar).CornerRadius=UDim.new(0,16)
 
 local sbHideCorner = Instance.new("Frame")
-sbHideCorner.Size = UDim2.new(0,14,1,0); sbHideCorner.Position = UDim2.new(1,-14,0,0)
+sbHideCorner.Size = UDim2.new(0,16,1,0); sbHideCorner.Position = UDim2.new(1,-16,0,0)
 sbHideCorner.BackgroundColor3 = C.sidebar; sbHideCorner.BorderSizePixel = 0; sbHideCorner.Parent = Sidebar
 
 local sbd=Instance.new("Frame"); sbd.Size=UDim2.new(0,1,1,0)
 sbd.Position = UDim2.new(1,0,0,0)
 sbd.BackgroundColor3=C.stroke; sbd.BorderSizePixel=0; sbd.Parent=Sidebar
 
-local logoF=Instance.new("Frame"); logoF.Size=UDim2.new(0,40,0,40)
-logoF.Position=UDim2.new(0,24,0,26); logoF.BackgroundColor3=Color3.fromRGB(255,255,255)
+local logoF=Instance.new("Frame"); logoF.Size=UDim2.new(0,44,0,44)
+logoF.Position=UDim2.new(0,26,0,28); logoF.BackgroundColor3=Color3.fromRGB(255,255,255)
 logoF.BorderSizePixel=0; logoF.Parent=Sidebar
 Instance.new("UICorner",logoF).CornerRadius=UDim.new(0,12)
 local lGrad = Instance.new("UIGradient")
-lGrad.Color = ColorSequence.new({
-    ColorSequenceKeypoint.new(0, C.accent),
-    ColorSequenceKeypoint.new(1, C.accentD)
-})
-lGrad.Rotation = 45
-lGrad.Parent = logoF
+lGrad.Color = ColorSequence.new({ColorSequenceKeypoint.new(0, C.accent), ColorSequenceKeypoint.new(1, C.accentD)})
+lGrad.Rotation = 45; lGrad.Parent = logoF
 
 local ll=Instance.new("TextLabel"); ll.Text="S"; ll.Size=UDim2.new(1,0,1,0)
 ll.BackgroundTransparency=1; ll.TextColor3=Color3.fromRGB(255,255,255)
-ll.TextSize=22; ll.Font=Enum.Font.GothamBold; ll.Parent=logoF
+ll.TextSize=24; ll.Font=Enum.Font.GothamBold; ll.Parent=logoF
 
 local bn=Instance.new("TextLabel"); bn.Text="SCRULI"
-bn.Size=UDim2.new(0,100,0,20); bn.Position=UDim2.new(0,76,0,26)
-bn.BackgroundTransparency=1; bn.TextColor3=C.tPrim; bn.TextSize=16
+bn.Size=UDim2.new(0,100,0,20); bn.Position=UDim2.new(0,84,0,28)
+bn.BackgroundTransparency=1; bn.TextColor3=C.tPrim; bn.TextSize=18
 bn.Font=Enum.Font.GothamBold; bn.TextXAlignment=Enum.TextXAlignment.Left; bn.Parent=Sidebar
 
-local bnSub=Instance.new("TextLabel"); bnSub.Text="PRO EDITION"
-bnSub.Size=UDim2.new(0,100,0,14); bnSub.Position=UDim2.new(0,76,0,48)
-bnSub.BackgroundTransparency=1; bnSub.TextColor3=C.accent; bnSub.TextSize=10
+local bnSub=Instance.new("TextLabel"); bnSub.Text="NIGER EDITION"
+bnSub.Size=UDim2.new(0,100,0,14); bnSub.Position=UDim2.new(0,84,0,52)
+bnSub.BackgroundTransparency=1; bnSub.TextColor3=C.accentD; bnSub.TextSize=10
 bnSub.Font=Enum.Font.GothamBold; bnSub.TextXAlignment=Enum.TextXAlignment.Left; bnSub.Parent=Sidebar
 
-local TabList=Instance.new("Frame"); TabList.Size=UDim2.new(1,0,1,-200)
-TabList.Position=UDim2.new(0,0,0,116); TabList.BackgroundTransparency=1; TabList.Parent=Sidebar
-local tlo=Instance.new("UIListLayout"); tlo.Padding=UDim.new(0,8); tlo.Parent=TabList
-local tpad=Instance.new("UIPadding"); tpad.PaddingLeft=UDim.new(0,18)
-tpad.PaddingRight=UDim.new(0,18); tpad.Parent=TabList
+local TabList=Instance.new("Frame"); TabList.Size=UDim2.new(1,0,1,-220)
+TabList.Position=UDim2.new(0,0,0,120); TabList.BackgroundTransparency=1; TabList.Parent=Sidebar
+local tlo=Instance.new("UIListLayout"); tlo.Padding=UDim.new(0,10); tlo.Parent=TabList
+local tpad=Instance.new("UIPadding"); tpad.PaddingLeft=UDim.new(0,20); tpad.PaddingRight=UDim.new(0,20); tpad.Parent=TabList
 
-local Content=Instance.new("Frame"); Content.Size=UDim2.new(1,-200,1,0)
-Content.Position=UDim2.new(0,200,0,0); Content.BackgroundTransparency=1
+local Content=Instance.new("Frame"); Content.Size=UDim2.new(1,-210,1,0)
+Content.Position=UDim2.new(0,210,0,0); Content.BackgroundTransparency=1
 Content.ClipsDescendants=true; Content.Parent=Root
 
 local Pages={}; local TabBtns={}
@@ -513,15 +445,14 @@ local function switchTab(name)
     for n,p in pairs(Pages) do p.Visible=(n==name) end
     for n,b in pairs(TabBtns) do
         local on=(n==name)
-        b.BackgroundColor3=on and C.accentD or C.sidebar
-        b.TextColor3=on and Color3.fromRGB(255,255,255) or C.tSec
-        b.BackgroundTransparency=on and 0.2 or 1
+        b.BackgroundColor3=on and C.card or C.sidebar
+        b.BackgroundTransparency=on and 0 or 1
         
         local icon = b:FindFirstChild("Icon")
-        if icon then icon.TextColor3 = on and Color3.fromRGB(255,255,255) or C.tMut end
+        if icon then icon.TextColor3 = on and C.accentD or C.tMut end
         
-        local indicator = b:FindFirstChild("Indicator")
-        if indicator then indicator.Visible = on end
+        local txt = b:FindFirstChild("Title")
+        if txt then txt.TextColor3 = on and C.tPrim or C.tSec end
     end
 end
 
@@ -532,24 +463,22 @@ local tabDefs={
     {name="Settings", icon="⚙"},
 }
 
+-- 🛠️ CORRECTION DÉFINITIVE DES ONGLETS (Textes séparés des Icônes)
 for _,t in ipairs(tabDefs) do
     local b=Instance.new("TextButton"); b.Name=t.name
-    b.Text="       "..t.name; b.Size=UDim2.new(1,0,0,42)
-    b.BackgroundColor3=C.sidebar; b.TextColor3=C.tSec; b.TextSize=13
-    b.Font=Enum.Font.GothamMedium; b.TextXAlignment=Enum.TextXAlignment.Left
-    b.BorderSizePixel=0; b.Parent=TabList
-    Instance.new("UICorner",b).CornerRadius=UDim.new(0,8)
+    b.Text=""; b.Size=UDim2.new(1,0,0,44) -- Le texte principal est vide
+    b.BackgroundColor3=C.sidebar; b.BorderSizePixel=0; b.Parent=TabList
+    Instance.new("UICorner",b).CornerRadius=UDim.new(0,10)
     
     local icon = Instance.new("TextLabel"); icon.Name="Icon"
-    icon.Text = t.icon; icon.Size=UDim2.new(0,30,1,0); icon.Position=UDim2.new(0,10,0,0)
-    icon.BackgroundTransparency=1; icon.TextColor3=C.tMut; icon.TextSize=16
+    icon.Text = t.icon; icon.Size=UDim2.new(0,44,1,0); icon.Position=UDim2.new(0,0,0,0)
+    icon.BackgroundTransparency=1; icon.TextColor3=C.tMut; icon.TextSize=18
     icon.Font=Enum.Font.Gotham; icon.Parent=b
     
-    local indicator = Instance.new("Frame"); indicator.Name="Indicator"
-    indicator.Size=UDim2.new(0,4,0,18); indicator.Position=UDim2.new(0,0,0.5,-9)
-    indicator.BackgroundColor3=C.accent; indicator.BorderSizePixel=0
-    indicator.Visible=false; indicator.Parent=b
-    Instance.new("UICorner",indicator).CornerRadius=UDim.new(1,0)
+    local title = Instance.new("TextLabel"); title.Name="Title"
+    title.Text = t.name; title.Size=UDim2.new(1,-44,1,0); title.Position=UDim2.new(0,44,0,0)
+    title.BackgroundTransparency=1; title.TextColor3=C.tSec; title.TextSize=14
+    title.Font=Enum.Font.GothamBold; title.TextXAlignment=Enum.TextXAlignment.Left; title.Parent=b
     
     TabBtns[t.name]=b; makePage(t.name)
     b.MouseButton1Click:Connect(function() switchTab(t.name) end)
@@ -557,16 +486,16 @@ end
 
 local function sideBtnF(text,y,bg,tc)
     local b=Instance.new("TextButton"); b.Text=text
-    b.Size=UDim2.new(1,-36,0,36); b.Position=UDim2.new(0,18,1,y)
+    b.Size=UDim2.new(1,-40,0,38); b.Position=UDim2.new(0,20,1,y)
     b.BackgroundColor3=bg; b.TextColor3=tc; b.TextSize=12
     b.Font=Enum.Font.GothamBold; b.BorderSizePixel=0; b.Parent=Sidebar
-    Instance.new("UICorner",b).CornerRadius=UDim.new(0,8)
+    Instance.new("UICorner",b).CornerRadius=UDim.new(1,0) -- Pill shape
     local bSk = Instance.new("UIStroke"); bSk.Color=C.stroke; bSk.Parent=b
     return b
 end
-local saveBtn  = sideBtnF("Save Config", -140, C.card, C.tPrim)
-local minBtn   = sideBtnF("Minimize UI", -94, C.card, C.tSec)
-local closeBtn = sideBtnF("Close Script", -48, Color3.fromRGB(50,20,25), C.red)
+local saveBtn  = sideBtnF("Save Config", -150, C.card, C.tPrim)
+local minBtn   = sideBtnF("Minimize UI", -100, C.card, C.tSec)
+local closeBtn = sideBtnF("Close Script", -50, Color3.fromRGB(45,15,20), C.red)
 
 saveBtn.MouseButton1Click:Connect(function()
     saveConfig(); saveBtn.Text="Saved ✓"; saveBtn.TextColor3=C.green
@@ -581,13 +510,13 @@ end)
 -- ─────────────────────────────────────────────
 -- UI HELPERS
 -- ─────────────────────────────────────────────
-local CW = 570
+local CW = 840 - 210 - 48 -- Width of content minus sidebar and padding
 
 local function card(parent,x,y,w,h)
     local f=Instance.new("Frame"); f.Size=UDim2.new(0,w,0,h)
     f.Position=UDim2.new(0,x,0,y); f.BackgroundColor3=C.card
     f.BorderSizePixel=0; f.Parent=parent
-    Instance.new("UICorner",f).CornerRadius=UDim.new(0,10)
+    Instance.new("UICorner",f).CornerRadius=UDim.new(0,12)
     local s=Instance.new("UIStroke"); s.Color=C.stroke; s.Thickness=1; s.Parent=f
     return f
 end
@@ -602,20 +531,20 @@ end
 
 local function mkToggle(parent,x,y,initVal,onChange)
     local on=initVal
-    local track=Instance.new("Frame"); track.Size=UDim2.new(0,46,0,24)
+    local track=Instance.new("Frame"); track.Size=UDim2.new(0,50,0,26)
     track.Position=UDim2.new(1,x,0,y)
     track.BackgroundColor3=on and C.accentD or C.deep
     track.BorderSizePixel=0; track.Parent=parent
     Instance.new("UICorner",track).CornerRadius=UDim.new(1,0)
     local s = Instance.new("UIStroke"); s.Color = C.stroke; s.Parent=track
     
-    local thumb=Instance.new("Frame"); thumb.Size=UDim2.new(0,18,0,18)
-    thumb.Position=on and UDim2.new(1,-21,0.5,-9) or UDim2.new(0,3,0.5,-9)
+    local thumb=Instance.new("Frame"); thumb.Size=UDim2.new(0,22,0,22)
+    thumb.Position=on and UDim2.new(1,-24,0.5,-11) or UDim2.new(0,2,0.5,-11)
     thumb.BackgroundColor3=Color3.fromRGB(255,255,255)
     thumb.BorderSizePixel=0; thumb.Parent=track
     Instance.new("UICorner",thumb).CornerRadius=UDim.new(1,0)
     
-    local ts = Instance.new("ImageLabel"); ts.Size=UDim2.new(1,10,1,10)
+    local ts = Instance.new("ImageLabel"); ts.Size=UDim2.new(1,12,1,12)
     ts.Position=UDim2.new(0.5,0,0.5,2); ts.AnchorPoint=Vector2.new(0.5,0.5)
     ts.BackgroundTransparency=1; ts.Image="rbxassetid://1316045217"
     ts.ImageColor3=Color3.fromRGB(0,0,0); ts.ImageTransparency=0.6
@@ -629,7 +558,7 @@ local function mkToggle(parent,x,y,initVal,onChange)
         on=not on
         TweenService:Create(track,ti,{BackgroundColor3=on and C.accentD or C.deep}):Play()
         TweenService:Create(thumb,ti,{
-            Position=on and UDim2.new(1,-21,0.5,-9) or UDim2.new(0,3,0.5,-9)
+            Position=on and UDim2.new(1,-24,0.5,-11) or UDim2.new(0,2,0.5,-11)
         }):Play()
         if onChange then onChange(on) end
     end)
@@ -665,75 +594,67 @@ end
 -- DASHBOARD
 -- ══════════════════════════════════════════════
 local dash=Pages["Dashboard"]
-lbl(dash,"Dashboard",24,24,300,24,24,Enum.Font.GothamBold,C.tPrim)
-lbl(dash,"Live network monitoring & telemetry",24,50,300,14,13,Enum.Font.Gotham,C.tMut)
+lbl(dash,"Dashboard",24,24,300,28,26,Enum.Font.GothamBold,C.tPrim)
+lbl(dash,"Live network monitoring & telemetry",24,54,400,16,14,Enum.Font.Gotham,C.tMut)
 
-local sc=card(dash,24,84,CW,60)
+local sc=card(dash,24,90,CW,64)
 local dot=Instance.new("Frame"); dot.Size=UDim2.new(0,10,0,10)
-dot.Position=UDim2.new(0,18,0.5,-5); dot.BackgroundColor3=C.red
+dot.Position=UDim2.new(0,20,0.5,-5); dot.BackgroundColor3=C.red
 dot.BorderSizePixel=0; dot.Parent=sc
 Instance.new("UICorner",dot).CornerRadius=UDim.new(1,0)
 statDotRef=dot
-lbl(sc,"SYSTEM STATUS",40,14,160,12,11,Enum.Font.GothamBold,C.tMut)
-statTextRef=lbl(sc,"Disconnected",40,32,280,18,15,Enum.Font.GothamBold,C.tPrim)
+lbl(sc,"SYSTEM STATUS",42,16,160,12,11,Enum.Font.GothamBold,C.tMut)
+statTextRef=lbl(sc,"Disconnected",42,34,280,18,15,Enum.Font.GothamBold,C.tPrim)
 
 local colW=math.floor((CW-20)/3)
-local sDefs={{key="seen",label="PACKETS SEEN",col=C.accent},{key="joined",label="NODES JOINED",col=C.green},{key="skipped",label="SKIPPED",col=C.tSec}}
+local sDefs={{key="seen",label="PACKETS SEEN",col=C.accentD},{key="joined",label="NODES JOINED",col=C.green},{key="skipped",label="SKIPPED",col=C.tSec}}
 for i,s in ipairs(sDefs) do
-    local sc2=card(dash,24+(i-1)*(colW+10),156,colW,76)
-    statNumRefs[s.key]=lbl(sc2,"0",0,16,colW,28,26,Enum.Font.GothamBold,s.col,Enum.TextXAlignment.Center)
-    lbl(sc2,s.label,0,50,colW,12,10,Enum.Font.GothamBold,C.tMut,Enum.TextXAlignment.Center)
+    local sc2=card(dash,24+(i-1)*(colW+10),164,colW,80)
+    statNumRefs[s.key]=lbl(sc2,"0",0,18,colW,28,26,Enum.Font.GothamBold,s.col,Enum.TextXAlignment.Center)
+    lbl(sc2,s.label,0,54,colW,12,11,Enum.Font.GothamBold,C.tMut,Enum.TextXAlignment.Center)
 end
 
 local hw=math.floor((CW-12)/2)
-local lc=card(dash,24,244,hw,78)
-lbl(lc,"LAST NODE ACQUIRED",20,16,200,12,10,Enum.Font.GothamBold,C.tMut)
-lastNameRef=lbl(lc,"Awaiting sync...",20,32,hw-40,18,15,Enum.Font.GothamBold,C.tPrim)
-lastMetaRef=lbl(lc,"...",20,54,hw-40,14,12,Enum.Font.Gotham,C.tSec)
+local lc=card(dash,24,254,hw,80)
+lbl(lc,"LAST NODE ACQUIRED",20,16,200,12,11,Enum.Font.GothamBold,C.tMut)
+lastNameRef=lbl(lc,"Awaiting sync...",20,34,hw-40,18,15,Enum.Font.GothamBold,C.tPrim)
+lastMetaRef=lbl(lc,"...",20,56,hw-40,14,13,Enum.Font.Gotham,C.tSec)
 
-local pc=card(dash,hw+36,244,hw,78)
-lbl(pc,"SESSION PEAK NODE",20,16,200,12,10,Enum.Font.GothamBold,C.tMut)
-peakNameRef=lbl(pc,"NONE",20,32,hw-40,18,15,Enum.Font.GothamBold,C.gold)
-peakMoneyRef=lbl(pc,"...",20,54,hw-40,14,12,Enum.Font.Gotham,C.tSec)
+local pc=card(dash,hw+36,254,hw,80)
+lbl(pc,"SESSION PEAK NODE",20,16,200,12,11,Enum.Font.GothamBold,C.tMut)
+peakNameRef=lbl(pc,"NONE",20,34,hw-40,18,15,Enum.Font.GothamBold,C.gold)
+peakMoneyRef=lbl(pc,"...",20,56,hw-40,14,13,Enum.Font.Gotham,C.tSec)
 
-local wlCard=card(dash,24,334,CW,44)
+local wlCard=card(dash,24,344,CW,46)
 local wlDot2=Instance.new("Frame"); wlDot2.Size=UDim2.new(0,8,0,8)
-wlDot2.Position=UDim2.new(0,18,0.5,-4); wlDot2.BackgroundColor3=C.tMut
+wlDot2.Position=UDim2.new(0,20,0.5,-4); wlDot2.BackgroundColor3=C.tMut
 wlDot2.BorderSizePixel=0; wlDot2.Parent=wlCard
 Instance.new("UICorner",wlDot2).CornerRadius=UDim.new(1,0)
-local wlStatusLbl=lbl(wlCard,"Filter: OFF -> Processing all targets",36,0,500,44,13,Enum.Font.GothamMedium,C.tSec)
+local wlStatusLbl=lbl(wlCard,"Filter: OFF -> Processing all targets",42,0,500,46,14,Enum.Font.GothamMedium,C.tSec)
 
 local function updateWLIndicator()
     if cfg.whitelistEnabled and #cfg.whitelist>0 then
-        wlDot2.BackgroundColor3=C.green
-        wlStatusLbl.Text="Filter: ON -> "..#cfg.whitelist.." active targets"
-        wlStatusLbl.TextColor3=C.green
+        wlDot2.BackgroundColor3=C.green; wlStatusLbl.Text="Filter: ON -> "..#cfg.whitelist.." active targets"; wlStatusLbl.TextColor3=C.green
     elseif cfg.whitelistEnabled then
-        wlDot2.BackgroundColor3=C.yellow
-        wlStatusLbl.Text="Filter: ON -> No targets selected"
-        wlStatusLbl.TextColor3=C.yellow
+        wlDot2.BackgroundColor3=C.yellow; wlStatusLbl.Text="Filter: ON -> No targets selected"; wlStatusLbl.TextColor3=C.yellow
     else
-        wlDot2.BackgroundColor3=C.tMut
-        wlStatusLbl.Text="Filter: OFF -> Processing all targets"
-        wlStatusLbl.TextColor3=C.tSec
+        wlDot2.BackgroundColor3=C.tMut; wlStatusLbl.Text="Filter: OFF -> Processing all targets"; wlStatusLbl.TextColor3=C.tSec
     end
 end
 updateWLIndicator()
 
-local fmtCard=card(dash,24,390,CW,44)
+local fmtCard=card(dash,24,400,CW,46)
 local fmtDot=Instance.new("Frame"); fmtDot.Size=UDim2.new(0,8,0,8)
-fmtDot.Position=UDim2.new(0,18,0.5,-4); fmtDot.BackgroundColor3=C.tMut
+fmtDot.Position=UDim2.new(0,20,0.5,-4); fmtDot.BackgroundColor3=C.tMut
 fmtDot.BorderSizePixel=0; fmtDot.Parent=fmtCard
 Instance.new("UICorner",fmtDot).CornerRadius=UDim.new(1,0)
-local fmtLbl=lbl(fmtCard,"Payload Format: Awaiting...",36,0,500,44,13,Enum.Font.GothamMedium,C.tSec)
+local fmtLbl=lbl(fmtCard,"Payload Format: Awaiting...",42,0,500,46,14,Enum.Font.GothamMedium,C.tSec)
 
 local function setFmtLabel(isB64)
     if isB64 then
-        fmtDot.BackgroundColor3=C.accent
-        fmtLbl.Text="Payload Format: Base64 Decoding Active"; fmtLbl.TextColor3=C.accent
+        fmtDot.BackgroundColor3=C.accentD; fmtLbl.Text="Payload Format: Base64 Decoding Active"; fmtLbl.TextColor3=C.accentD
     else
-        fmtDot.BackgroundColor3=C.green
-        fmtLbl.Text="Payload Format: Standard JSON"; fmtLbl.TextColor3=C.green
+        fmtDot.BackgroundColor3=C.green; fmtLbl.Text="Payload Format: Standard JSON"; fmtLbl.TextColor3=C.green
     end
 end
 
@@ -741,65 +662,57 @@ end
 -- LOG PAGE & SPAM INPUT
 -- ══════════════════════════════════════════════
 local logPage=Pages["Log"]
-lbl(logPage,"Live Event Logs",24,24,300,24,24,Enum.Font.GothamBold,C.tPrim)
-lbl(logPage,"Real-time node interception & interaction",24,50,420,14,13,Enum.Font.Gotham,C.tMut)
+lbl(logPage,"Live Event Logs",24,24,300,28,26,Enum.Font.GothamBold,C.tPrim)
+lbl(logPage,"Real-time node interception & interaction",24,54,420,16,14,Enum.Font.Gotham,C.tMut)
 
-lbl(logPage,"FORCE TRIES:",340,28,100,12,11,Enum.Font.GothamBold,C.tMut)
+lbl(logPage,"FORCE TRIES:",330,30,100,12,11,Enum.Font.GothamBold,C.tMut)
 
-local retryInputBg=Instance.new("Frame"); retryInputBg.Size=UDim2.new(0,74,0,32)
-retryInputBg.Position=UDim2.new(0,424,0,18); retryInputBg.BackgroundColor3=C.deep
+local retryInputBg=Instance.new("Frame"); retryInputBg.Size=UDim2.new(0,74,0,34)
+retryInputBg.Position=UDim2.new(0,414,0,18); retryInputBg.BackgroundColor3=C.deep
 retryInputBg.BorderSizePixel=0; retryInputBg.Parent=logPage
-Instance.new("UICorner",retryInputBg).CornerRadius=UDim.new(0,6)
+Instance.new("UICorner",retryInputBg).CornerRadius=UDim.new(0,8)
 local riSk=Instance.new("UIStroke"); riSk.Color=C.stroke; riSk.Parent=retryInputBg
 
 local retryInputBox = Instance.new("TextBox")
 retryInputBox.Size = UDim2.new(1, 0, 1, 0)
 retryInputBox.BackgroundTransparency = 1
 retryInputBox.Text = tostring(cfg.retryCount)
-retryInputBox.TextColor3 = C.accent
+retryInputBox.TextColor3 = C.accentD
 retryInputBox.TextSize = 14
 retryInputBox.Font = Enum.Font.GothamBold
 retryInputBox.Parent = retryInputBg
 
 retryInputBox.FocusLost:Connect(function()
     local val = tonumber(retryInputBox.Text)
-    if val and val > 0 then
-        cfg.retryCount = math.floor(val)
-        saveConfig()
-    else
-        retryInputBox.Text = tostring(cfg.retryCount)
-    end
+    if val and val > 0 then cfg.retryCount = math.floor(val); saveConfig() else retryInputBox.Text = tostring(cfg.retryCount) end
 end)
 
 local clearBtn=Instance.new("TextButton"); clearBtn.Text="Clear Logs"
-clearBtn.Size=UDim2.new(0,84,0,32); clearBtn.Position=UDim2.new(1,-108,0,18)
-clearBtn.BackgroundColor3=Color3.fromRGB(40,25,30); clearBtn.TextColor3=C.tSec
+clearBtn.Size=UDim2.new(0,84,0,34); clearBtn.Position=UDim2.new(1,-108,0,18)
+clearBtn.BackgroundColor3=Color3.fromRGB(35,20,25); clearBtn.TextColor3=C.tSec
 clearBtn.TextSize=12; clearBtn.Font=Enum.Font.GothamMedium; clearBtn.BorderSizePixel=0
-clearBtn.Parent=logPage; Instance.new("UICorner",clearBtn).CornerRadius=UDim.new(0,6)
+clearBtn.Parent=logPage; Instance.new("UICorner",clearBtn).CornerRadius=UDim.new(0,8)
 Instance.new("UIStroke",clearBtn).Color=C.stroke
 
 logScroll=Instance.new("ScrollingFrame")
 logScroll.Name="LogScroll"
 logScroll.Size=UDim2.new(1,-48,1,-80)
-logScroll.Position=UDim2.new(0,24,0,68)
-logScroll.BackgroundColor3=C.logBg
+logScroll.Position=UDim2.new(0,24,0,74)
+logScroll.BackgroundColor3=C.bg
 logScroll.BorderSizePixel=0
-logScroll.ScrollBarThickness=4
-logScroll.ScrollBarImageColor3=C.accent
+logScroll.ScrollBarThickness=0 -- Cache la scrollbar pour faire ultra propre
 logScroll.ScrollingDirection=Enum.ScrollingDirection.Y
 logScroll.CanvasSize=UDim2.new(0,0,0,0)
 logScroll.AutomaticCanvasSize=Enum.AutomaticSize.Y
 logScroll.Parent=logPage
-Instance.new("UICorner",logScroll).CornerRadius=UDim.new(0,10)
-local ssk=Instance.new("UIStroke"); ssk.Color=C.stroke; ssk.Thickness=1; ssk.Parent=logScroll
 
 local logLL=Instance.new("UIListLayout")
-logLL.Padding=UDim.new(0,0)
+logLL.Padding=UDim.new(0,8) -- Espace parfait entre chaque carte log
 logLL.SortOrder=Enum.SortOrder.LayoutOrder
 logLL.FillDirection=Enum.FillDirection.Vertical
 logLL.Parent=logScroll
-local logPad=Instance.new("UIPadding"); logPad.PaddingTop=UDim.new(0,4); logPad.PaddingBottom=UDim.new(0,4); logPad.Parent=logScroll
 
+local logPad=Instance.new("UIPadding"); logPad.PaddingBottom=UDim.new(0,10); logPad.Parent=logScroll
 local logOrder=0
 
 local function addLog(msg, col, isSub, jobId)
@@ -807,42 +720,47 @@ local function addLog(msg, col, isSub, jobId)
     local hasJob = jobId and jobId ~= ""
     logOrder += 1
 
+    -- 🛠️ DESIGN : Chaque Log est une VRAIE carte indépendante.
     local row=Instance.new("Frame")
     row.Name="Row"
-    row.Size=UDim2.new(1,0,0,42)
-    row.BackgroundColor3=C.logBg
+    row.Size=UDim2.new(1,0,0,48)
+    row.BackgroundColor3=C.card
     row.BorderSizePixel=0
     row.LayoutOrder=logOrder
     row.Active=true 
     row.Parent=logScroll
+    Instance.new("UICorner",row).CornerRadius=UDim.new(0,10)
+    Instance.new("UIStroke",row).Color=C.stroke
 
     row.MouseEnter:Connect(function() TweenService:Create(row,TweenInfo.new(0.15),{BackgroundColor3=C.rowHov}):Play() end)
-    row.MouseLeave:Connect(function() TweenService:Create(row,TweenInfo.new(0.15),{BackgroundColor3=C.logBg}):Play() end)
-
-    local div=Instance.new("Frame"); div.Size=UDim2.new(1,0,0,1); div.Position=UDim2.new(0,0,1,-1)
-    div.BackgroundColor3=C.stroke; div.BorderSizePixel=0; div.Parent=row
+    row.MouseLeave:Connect(function() TweenService:Create(row,TweenInfo.new(0.15),{BackgroundColor3=C.card}):Play() end)
 
     local tslbl=Instance.new("TextLabel"); tslbl.Text=getTS()
-    tslbl.Size=UDim2.new(0,60,1,0); tslbl.Position=UDim2.new(0,14,0,0)
-    tslbl.BackgroundTransparency=1; tslbl.TextColor3=C.tMut; tslbl.TextSize=11
+    tslbl.Size=UDim2.new(0,60,1,0); tslbl.Position=UDim2.new(0,16,0,0)
+    tslbl.BackgroundTransparency=1; tslbl.TextColor3=C.tMut; tslbl.TextSize=12
     tslbl.Font=Enum.Font.Gotham; tslbl.ZIndex=2; tslbl.Parent=row
 
-    local btnW = hasJob and 260 or 0
+    -- 🛠️ LIMITATION STRICTE DU TEXTE POUR NE JAMAIS TOUCHER LES BOUTONS
     local txtLbl=Instance.new("TextLabel"); txtLbl.Text=msg
-    txtLbl.Size=UDim2.new(1,-(80+btnW),1,0); txtLbl.Position=UDim2.new(0,74,0,0)
-    txtLbl.BackgroundTransparency=1; txtLbl.TextColor3=col; txtLbl.TextSize=13
+    txtLbl.Size=UDim2.new(1, hasJob and -280 or -80, 1, 0) 
+    txtLbl.Position=UDim2.new(0,80,0,0)
+    txtLbl.BackgroundTransparency=1; txtLbl.TextColor3=col; txtLbl.TextSize=14
     txtLbl.Font=isSub and Enum.Font.Gotham or Enum.Font.GothamMedium
     txtLbl.TextTruncate=Enum.TextTruncate.AtEnd
     txtLbl.TextXAlignment=Enum.TextXAlignment.Left
     txtLbl.ZIndex=2; txtLbl.Parent=row
 
+    local actionFunctions = {}
+
     if hasJob then
+        -- 🛠️ BOUTONS AVEC ANCHORPOINT FIXE SUR LA DROITE (Impossible qu'ils se décalent)
         local jb=Instance.new("TextButton"); jb.Text="JOIN"
-        jb.Size=UDim2.new(0,64,0,26); jb.Position=UDim2.new(1,-176,0.5,-13)
-        jb.BackgroundColor3=C.accentD; jb.TextColor3=Color3.fromRGB(255,255,255)
-        jb.TextSize=11; jb.Font=Enum.Font.GothamBold; jb.BorderSizePixel=0
+        jb.Size=UDim2.new(0,66,0,30); jb.Position=UDim2.new(1,-12,0.5,0)
+        jb.AnchorPoint=Vector2.new(1, 0.5)
+        jb.BackgroundColor3=C.accentD; jb.TextColor3=C.deep
+        jb.TextSize=12; jb.Font=Enum.Font.GothamBold; jb.BorderSizePixel=0
         jb.ZIndex=10; jb.Parent=row
-        Instance.new("UICorner",jb).CornerRadius=UDim.new(0,6)
+        Instance.new("UICorner",jb).CornerRadius=UDim.new(1,0)
 
         jb.MouseButton1Click:Connect(function()
             jb.Text="..."
@@ -855,51 +773,59 @@ local function addLog(msg, col, isSub, jobId)
         local spamming=false
         local sb=Instance.new("TextButton")
         sb.Text="FORCE JOIN"
-        sb.Size=UDim2.new(0,94,0,26); sb.Position=UDim2.new(1,-102,0.5,-13)
-        sb.BackgroundColor3=C.deep; sb.TextColor3=C.accent
-        sb.TextSize=11; sb.Font=Enum.Font.GothamBold; sb.BorderSizePixel=0
+        sb.Size=UDim2.new(0,100,0,30); sb.Position=UDim2.new(1,-86,0.5,0)
+        sb.AnchorPoint=Vector2.new(1, 0.5)
+        sb.BackgroundColor3=C.deep; sb.TextColor3=C.accentD
+        sb.TextSize=12; sb.Font=Enum.Font.GothamBold; sb.BorderSizePixel=0
         sb.ZIndex=10; sb.Parent=row
-        Instance.new("UICorner",sb).CornerRadius=UDim.new(0,6)
-        local ssk2=Instance.new("UIStroke"); ssk2.Color=C.accent; ssk2.Parent=sb
+        Instance.new("UICorner",sb).CornerRadius=UDim.new(1,0)
+        local ssk2=Instance.new("UIStroke"); ssk2.Color=C.accentD; ssk2.Parent=sb
 
         local stopB=Instance.new("TextButton"); stopB.Text="STOP"
-        stopB.Size=UDim2.new(0,46,0,26); stopB.Position=UDim2.new(1,-232,0.5,-13)
-        stopB.BackgroundColor3=Color3.fromRGB(65,25,30); stopB.TextColor3=C.tPrim
-        stopB.TextSize=11; stopB.Font=Enum.Font.GothamBold; stopB.BorderSizePixel=0
+        stopB.Size=UDim2.new(0,54,0,30); stopB.Position=UDim2.new(1,-194,0.5,0)
+        stopB.AnchorPoint=Vector2.new(1, 0.5)
+        stopB.BackgroundColor3=Color3.fromRGB(65,20,30); stopB.TextColor3=C.tPrim
+        stopB.TextSize=12; stopB.Font=Enum.Font.GothamBold; stopB.BorderSizePixel=0
         stopB.Visible=false; stopB.ZIndex=10; stopB.Parent=row
-        Instance.new("UICorner",stopB).CornerRadius=UDim.new(0,6)
+        Instance.new("UICorner",stopB).CornerRadius=UDim.new(1,0)
 
-        sb.MouseButton1Click:Connect(function()
+        local function executeForceJoin()
             if spamming then return end
-            local ret = tonumber(retryInputBox.Text) or cfg.retryCount
+            local ret = tonumber(cfg.retryCount) or 10
             if ret <= 0 then return end
 
             spamming=true; stopB.Visible=true
-            sb.BackgroundColor3 = C.accent
+            sb.BackgroundColor3 = C.accentD
             sb.TextColor3 = C.deep
             
             task.spawn(function()
                 for i=1,ret do
                     if not spamming then break end
-                    sb.Text="TRY "..i.."/"..ret
+                    if sb and sb.Parent then sb.Text="AUTO "..i.."/"..ret end
                     pcall(function() TeleportService:TeleportToPlaceInstance(PLACE_ID,jobId,Players.LocalPlayer) end)
-                    task.wait(0.35) 
+                    task.wait(0.3) 
                 end
-                spamming=false; stopB.Visible=false
-                sb.Text="DONE"; sb.BackgroundColor3=C.deep; sb.TextColor3=C.green; ssk2.Color=C.green
-                task.delay(2, function()
-                    if sb then sb.Text="FORCE JOIN"; sb.TextColor3=C.accent; ssk2.Color=C.accent end
-                end)
+                spamming=false; if stopB and stopB.Parent then stopB.Visible=false end
+                if sb and sb.Parent then
+                    sb.Text="DONE"; sb.BackgroundColor3=C.deep; sb.TextColor3=C.green; ssk2.Color=C.green
+                    task.delay(2, function()
+                        if sb and sb.Parent then sb.Text="FORCE JOIN"; sb.TextColor3=C.accentD; ssk2.Color=C.accentD end
+                    end)
+                end
             end)
-        end)
+        end
+
+        sb.MouseButton1Click:Connect(executeForceJoin)
+        actionFunctions.TriggerForceJoin = executeForceJoin
 
         stopB.MouseButton1Click:Connect(function()
             spamming=false; stopB.Visible=false
-            sb.Text="FORCE JOIN"; sb.BackgroundColor3=C.deep; sb.TextColor3=C.accent
+            sb.Text="FORCE JOIN"; sb.BackgroundColor3=C.deep; sb.TextColor3=C.accentD
         end)
     end
 
     task.defer(function() logScroll.CanvasPosition=Vector2.new(0,math.huge) end)
+    return actionFunctions
 end
 
 clearBtn.MouseButton1Click:Connect(function()
@@ -913,209 +839,124 @@ end)
 -- WHITELIST PAGE
 -- ══════════════════════════════════════════════
 local wlPage=Pages["Whitelist"]
-lbl(wlPage,"Target Filter",24,24,300,24,24,Enum.Font.GothamBold,C.tPrim)
-lbl(wlPage,"Restrict network acquisition to specific node targets",24,50,500,14,13,Enum.Font.Gotham,C.tMut)
+lbl(wlPage,"Target Filter",24,24,300,28,26,Enum.Font.GothamBold,C.tPrim)
+lbl(wlPage,"Restrict network acquisition to specific node targets",24,54,500,16,14,Enum.Font.Gotham,C.tMut)
 
-local wlTogCard=card(wlPage,24,84,CW,60)
-lbl(wlTogCard,"ENABLE FILTER",20,14,260,12,11,Enum.Font.GothamBold,C.tMut)
-lbl(wlTogCard,"When ON, system ignores unselected targets",20,32,360,14,12,Enum.Font.Gotham,C.tSec)
-mkToggle(wlTogCard,-64,18,cfg.whitelistEnabled,function(v)
-    cfg.whitelistEnabled=v; saveConfig(); updateWLIndicator()
-end)
+local wlTogCard=card(wlPage,24,90,CW,64)
+lbl(wlTogCard,"ENABLE FILTER",20,16,260,12,11,Enum.Font.GothamBold,C.tMut)
+lbl(wlTogCard,"When ON, system ignores unselected targets",20,34,360,16,13,Enum.Font.Gotham,C.tSec)
+mkToggle(wlTogCard,-66,19,cfg.whitelistEnabled,function(v) cfg.whitelistEnabled=v; saveConfig(); updateWLIndicator() end)
 
-local srchBG=Instance.new("Frame"); srchBG.Size=UDim2.new(0,CW,0,40)
-srchBG.Position=UDim2.new(0,24,0,156); srchBG.BackgroundColor3=C.deep
-srchBG.BorderSizePixel=0; srchBG.Parent=wlPage
-Instance.new("UICorner",srchBG).CornerRadius=UDim.new(0,8)
-local srchSk=Instance.new("UIStroke"); srchSk.Color=C.stroke; srchSk.Parent=srchBG
-local srchBox=Instance.new("TextBox"); srchBox.Size=UDim2.new(1,-24,1,0)
-srchBox.Position=UDim2.new(0,14,0,0); srchBox.BackgroundTransparency=1
-srchBox.TextColor3=C.tPrim; srchBox.PlaceholderText="Search database..."
-srchBox.PlaceholderColor3=C.tMut; srchBox.TextSize=13; srchBox.Font=Enum.Font.GothamMedium
-srchBox.TextXAlignment=Enum.TextXAlignment.Left; srchBox.ClearTextOnFocus=false
-srchBox.Parent=srchBG
-srchBox.Focused:Connect(function() TweenService:Create(srchSk,TweenInfo.new(0.15),{Color=C.accent}):Play() end)
+local srchBG=Instance.new("Frame"); srchBG.Size=UDim2.new(0,CW,0,44); srchBG.Position=UDim2.new(0,24,0,164); srchBG.BackgroundColor3=C.deep; srchBG.BorderSizePixel=0; srchBG.Parent=wlPage
+Instance.new("UICorner",srchBG).CornerRadius=UDim.new(0,10); local srchSk=Instance.new("UIStroke"); srchSk.Color=C.stroke; srchSk.Parent=srchBG
+local srchBox=Instance.new("TextBox"); srchBox.Size=UDim2.new(1,-30,1,0); srchBox.Position=UDim2.new(0,16,0,0); srchBox.BackgroundTransparency=1; srchBox.TextColor3=C.tPrim; srchBox.PlaceholderText="Search database..."; srchBox.PlaceholderColor3=C.tMut; srchBox.TextSize=14; srchBox.Font=Enum.Font.GothamMedium; srchBox.TextXAlignment=Enum.TextXAlignment.Left; srchBox.ClearTextOnFocus=false; srchBox.Parent=srchBG
+srchBox.Focused:Connect(function() TweenService:Create(srchSk,TweenInfo.new(0.15),{Color=C.accentD}):Play() end)
 srchBox.FocusLost:Connect(function() TweenService:Create(srchSk,TweenInfo.new(0.15),{Color=C.stroke}):Play() end)
 
-local selCntLbl=lbl(wlPage,"0 locked",CW-160,206,80,14,12,Enum.Font.GothamBold,C.tMut,Enum.TextXAlignment.Right)
+local selCntLbl=lbl(wlPage,"0 locked",CW-180,218,80,16,13,Enum.Font.GothamBold,C.tMut,Enum.TextXAlignment.Right)
+local function updateSelCount() local n=#cfg.whitelist; selCntLbl.Text=n.." locked"; selCntLbl.TextColor3=n>0 and C.green or C.tMut; updateWLIndicator() end
 
-local function updateSelCount()
-    local n=#cfg.whitelist
-    selCntLbl.Text=n.." locked"
-    selCntLbl.TextColor3=n>0 and C.green or C.tMut
-    updateWLIndicator()
-end
+local clrSelBtn=Instance.new("TextButton"); clrSelBtn.Text="Clear All"; clrSelBtn.Size=UDim2.new(0,90,0,32); clrSelBtn.Position=UDim2.new(1,-114,0,210); clrSelBtn.BackgroundColor3=Color3.fromRGB(40,20,25); clrSelBtn.TextColor3=C.tSec; clrSelBtn.TextSize=13; clrSelBtn.Font=Enum.Font.GothamMedium; clrSelBtn.BorderSizePixel=0; clrSelBtn.Parent=wlPage
+Instance.new("UICorner",clrSelBtn).CornerRadius=UDim.new(0,8); Instance.new("UIStroke",clrSelBtn).Color=C.stroke
 
-local clrSelBtn=Instance.new("TextButton"); clrSelBtn.Text="Clear All"
-clrSelBtn.Size=UDim2.new(0,84,0,30); clrSelBtn.Position=UDim2.new(1,-108,0,198)
-clrSelBtn.BackgroundColor3=Color3.fromRGB(45,20,25); clrSelBtn.TextColor3=C.tSec
-clrSelBtn.TextSize=12; clrSelBtn.Font=Enum.Font.GothamMedium; clrSelBtn.BorderSizePixel=0
-clrSelBtn.Parent=wlPage; Instance.new("UICorner",clrSelBtn).CornerRadius=UDim.new(0,6)
-Instance.new("UIStroke",clrSelBtn).Color=C.stroke
+local wlScroll=Instance.new("ScrollingFrame"); wlScroll.Size=UDim2.new(1,-48,1,-260); wlScroll.Position=UDim2.new(0,24,0,250); wlScroll.BackgroundColor3=C.bg; wlScroll.BorderSizePixel=0; wlScroll.ScrollBarThickness=0; wlScroll.CanvasSize=UDim2.new(0,0,0,0); wlScroll.AutomaticCanvasSize=Enum.AutomaticSize.Y; wlScroll.Parent=wlPage
+local wlGrid=Instance.new("Frame"); wlGrid.Size=UDim2.new(1,-16,0,0); wlGrid.Position=UDim2.new(0,8,0,8); wlGrid.BackgroundTransparency=1; wlGrid.AutomaticSize=Enum.AutomaticSize.Y; wlGrid.Parent=wlScroll
+local wlLayout=Instance.new("UIGridLayout"); wlLayout.CellSize=UDim2.new(0,175,0,40); wlLayout.CellPadding=UDim2.new(0,8,0,8); wlLayout.Parent=wlGrid
 
-local wlScroll=Instance.new("ScrollingFrame"); wlScroll.Size=UDim2.new(1,-48,1,-248)
-wlScroll.Position=UDim2.new(0,24,0,238); wlScroll.BackgroundColor3=C.logBg
-wlScroll.BorderSizePixel=0; wlScroll.ScrollBarThickness=4; wlScroll.ScrollBarImageColor3=C.accent
-wlScroll.CanvasSize=UDim2.new(0,0,0,0); wlScroll.AutomaticCanvasSize=Enum.AutomaticSize.Y
-wlScroll.Parent=wlPage
-Instance.new("UICorner",wlScroll).CornerRadius=UDim.new(0,10)
-local wlSk2=Instance.new("UIStroke"); wlSk2.Color=C.stroke; wlSk2.Parent=wlScroll
-
-local wlGrid=Instance.new("Frame"); wlGrid.Size=UDim2.new(1,-16,0,0)
-wlGrid.Position=UDim2.new(0,8,0,8); wlGrid.BackgroundTransparency=1
-wlGrid.AutomaticSize=Enum.AutomaticSize.Y; wlGrid.Parent=wlScroll
-local wlLayout=Instance.new("UIGridLayout"); wlLayout.CellSize=UDim2.new(0,182,0,36)
-wlLayout.CellPadding=UDim2.new(0,8,0,8); wlLayout.Parent=wlGrid
-
-local function isWL(name)
-    for _,w in ipairs(cfg.whitelist) do if w==name then return true end end
-    return false
-end
+local function isWL(name) for _,w in ipairs(cfg.whitelist) do if w==name then return true end end return false end
 local function toggleWL(name)
-    local found=false
-    for i,w in ipairs(cfg.whitelist) do
-        if w==name then table.remove(cfg.whitelist,i); found=true; break end
-    end
-    if not found then table.insert(cfg.whitelist,name) end
-    saveConfig(); updateSelCount()
+    local found=false; for i,w in ipairs(cfg.whitelist) do if w==name then table.remove(cfg.whitelist,i); found=true; break end end
+    if not found then table.insert(cfg.whitelist,name) end; saveConfig(); updateSelCount()
 end
 
 local function refreshWL(filter)
-    filter=(filter or ""):lower()
-    for _,c in ipairs(wlGrid:GetChildren()) do
-        if c:IsA("TextButton") then c:Destroy() end
-    end
+    filter=(filter or ""):lower(); for _,c in ipairs(wlGrid:GetChildren()) do if c:IsA("TextButton") then c:Destroy() end end
     for _,name in ipairs(ALL_BRAINROTS) do
         if filter=="" or name:lower():find(filter,1,true) then
             local sel=isWL(name)
-            local b=Instance.new("TextButton"); b.Text=name
-            b.Size=UDim2.new(0,182,0,36)
-            b.BackgroundColor3=sel and C.accentD or C.deep
-            b.TextColor3=sel and Color3.fromRGB(255,255,255) or C.tSec
-            b.TextSize=12; b.Font=Enum.Font.GothamMedium; b.BorderSizePixel=0
-            b.TextTruncate=Enum.TextTruncate.AtEnd; b.Parent=wlGrid
-            Instance.new("UICorner",b).CornerRadius=UDim.new(0,6)
-            if not sel then Instance.new("UIStroke",b).Color=C.stroke end
+            local b=Instance.new("TextButton"); b.Text=name; b.Size=UDim2.new(0,175,0,40)
+            b.BackgroundColor3=sel and C.accentD or C.card
+            b.TextColor3=sel and C.deep or C.tSec
+            b.TextSize=13; b.Font=Enum.Font.GothamMedium; b.BorderSizePixel=0; b.TextTruncate=Enum.TextTruncate.AtEnd; b.Parent=wlGrid
+            Instance.new("UICorner",b).CornerRadius=UDim.new(0,8); if not sel then Instance.new("UIStroke",b).Color=C.stroke end
             b.MouseButton1Click:Connect(function()
-                toggleWL(name)
-                local nowSel=isWL(name)
-                b.BackgroundColor3=nowSel and C.accentD or C.deep
-                b.TextColor3=nowSel and Color3.fromRGB(255,255,255) or C.tSec
-                if nowSel then
-                    if b:FindFirstChild("UIStroke") then b.UIStroke:Destroy() end
-                else
-                    Instance.new("UIStroke",b).Color=C.stroke
-                end
+                toggleWL(name); local nowSel=isWL(name)
+                b.BackgroundColor3=nowSel and C.accentD or C.card; b.TextColor3=nowSel and C.deep or C.tSec
+                if nowSel then if b:FindFirstChild("UIStroke") then b.UIStroke:Destroy() end else Instance.new("UIStroke",b).Color=C.stroke end
             end)
         end
     end
 end
 refreshWL(); updateSelCount()
 srchBox:GetPropertyChangedSignal("Text"):Connect(function() refreshWL(srchBox.Text) end)
-clrSelBtn.MouseButton1Click:Connect(function()
-    cfg.whitelist={}; saveConfig(); updateSelCount(); refreshWL(srchBox.Text)
-end)
+clrSelBtn.MouseButton1Click:Connect(function() cfg.whitelist={}; saveConfig(); updateSelCount(); refreshWL(srchBox.Text) end)
 
 -- ══════════════════════════════════════════════
 -- SETTINGS PAGE (SCROLLABLE MENU)
 -- ══════════════════════════════════════════════
 local sett=Pages["Settings"]
-lbl(sett,"Settings",24,24,300,24,24,Enum.Font.GothamBold,C.tPrim)
-lbl(sett,"System configuration & thresholds",24,50,300,14,13,Enum.Font.Gotham,C.tMut)
+lbl(sett,"Settings",24,24,300,28,26,Enum.Font.GothamBold,C.tPrim)
+lbl(sett,"System configuration & thresholds",24,54,300,16,14,Enum.Font.Gotham,C.tMut)
 
-local settScroll = Instance.new("ScrollingFrame")
-settScroll.Size = UDim2.new(1, -24, 1, -84)
-settScroll.Position = UDim2.new(0, 24, 0, 84)
-settScroll.BackgroundTransparency = 1
-settScroll.BorderSizePixel = 0
-settScroll.ScrollBarThickness = 4
-settScroll.ScrollBarImageColor3 = C.accent
-settScroll.AutomaticCanvasSize = Enum.AutomaticSize.Y
-settScroll.CanvasSize = UDim2.new(0, 0, 0, 0)
-settScroll.Parent = sett
-
-local settLL = Instance.new("UIListLayout")
-settLL.Padding = UDim.new(0, 12)
-settLL.SortOrder = Enum.SortOrder.LayoutOrder
-settLL.Parent = settScroll
-
-local logPadSett=Instance.new("UIPadding"); logPadSett.PaddingBottom=UDim.new(0,10); logPadSett.Parent=settScroll
+local settScroll = Instance.new("ScrollingFrame"); settScroll.Size = UDim2.new(1, -24, 1, -94); settScroll.Position = UDim2.new(0, 24, 0, 88); settScroll.BackgroundTransparency = 1; settScroll.BorderSizePixel = 0; settScroll.ScrollBarThickness = 0; settScroll.AutomaticCanvasSize = Enum.AutomaticSize.Y; settScroll.CanvasSize = UDim2.new(0, 0, 0, 0); settScroll.Parent = sett
+local settLL = Instance.new("UIListLayout"); settLL.Padding = UDim.new(0, 12); settLL.SortOrder = Enum.SortOrder.LayoutOrder; settLL.Parent = settScroll
+local logPadSett=Instance.new("UIPadding"); logPadSett.PaddingBottom=UDim.new(0,14); logPadSett.Parent=settScroll
 
 local function settCardScroll(h) 
-    local f = Instance.new("Frame")
-    f.Size = UDim2.new(0, CW, 0, h)
-    f.BackgroundColor3 = C.card
-    f.BorderSizePixel = 0
-    f.Parent = settScroll
-    Instance.new("UICorner", f).CornerRadius = UDim.new(0, 10)
-    local s = Instance.new("UIStroke"); s.Color = C.stroke; s.Thickness = 1; s.Parent = f
-    return f
+    local f = Instance.new("Frame"); f.Size = UDim2.new(0, CW, 0, h); f.BackgroundColor3 = C.card; f.BorderSizePixel = 0; f.Parent = settScroll
+    Instance.new("UICorner", f).CornerRadius = UDim.new(0, 12); Instance.new("UIStroke", f).Color = C.stroke; return f
 end
 
-local ac=settCardScroll(60)
-lbl(ac,"AUTO JOIN PROTOCOL",20,14,200,12,11,Enum.Font.GothamBold,C.tMut)
-lbl(ac,"Force teleportation upon valid target acquisition",20,32,380,14,12,Enum.Font.Gotham,C.tSec)
-mkToggle(ac,-64,18,cfg.autoJoin,function(v) cfg.autoJoin=v; saveConfig() end)
+local ac=settCardScroll(64)
+lbl(ac,"AUTO JOIN PROTOCOL",22,16,200,12,11,Enum.Font.GothamBold,C.tMut)
+lbl(ac,"Force teleportation upon valid target acquisition",22,34,380,16,13,Enum.Font.Gotham,C.tSec)
+mkToggle(ac,-66,19,cfg.autoJoin,function(v) cfg.autoJoin=v; saveConfig() end)
 
-local afjc=settCardScroll(60)
-lbl(afjc,"AUTO FORCE JOIN",20,14,200,12,11,Enum.Font.GothamBold,C.tMut)
-lbl(afjc,"Spam teleportation immediately upon node discovery",20,32,380,14,12,Enum.Font.Gotham,C.tSec)
-mkToggle(afjc,-64,18,cfg.autoForceJoin,function(v) cfg.autoForceJoin=v; saveConfig() end)
+local afjc=settCardScroll(64)
+lbl(afjc,"AUTO FORCE JOIN",22,16,200,12,11,Enum.Font.GothamBold,C.tMut)
+lbl(afjc,"Spam teleportation immediately upon node discovery",22,34,400,16,13,Enum.Font.Gotham,C.tSec)
+mkToggle(afjc,-66,19,cfg.autoForceJoin,function(v) cfg.autoForceJoin=v; saveConfig() end)
 
-local tc=settCardScroll(60)
-lbl(tc,"HUD NOTIFICATIONS",20,14,200,12,11,Enum.Font.GothamBold,C.tMut)
-lbl(tc,"Enable slide-in interface upon node discovery",20,32,380,14,12,Enum.Font.Gotham,C.tSec)
-mkToggle(tc,-64,18,cfg.toastEnabled,function(v) cfg.toastEnabled=v; saveConfig() end)
+local tc=settCardScroll(64)
+lbl(tc,"HUD NOTIFICATIONS",22,16,200,12,11,Enum.Font.GothamBold,C.tMut)
+lbl(tc,"Enable slide-in interface upon node discovery",22,34,380,16,13,Enum.Font.Gotham,C.tSec)
+mkToggle(tc,-66,19,cfg.toastEnabled,function(v) cfg.toastEnabled=v; saveConfig() end)
 
-local mc=settCardScroll(94)
-lbl(mc,"VALUE THRESHOLD",20,14,250,12,11,Enum.Font.GothamBold,C.tMut)
-local monRow=Instance.new("Frame"); monRow.Size=UDim2.new(1,-24,0,34)
-monRow.Position=UDim2.new(0,16,0,30); monRow.BackgroundTransparency=1; monRow.Parent=mc
-local mrl=Instance.new("UIListLayout"); mrl.FillDirection=Enum.FillDirection.Horizontal
-mrl.Padding=UDim.new(0,8); mrl.VerticalAlignment=Enum.VerticalAlignment.Center; mrl.Parent=monRow
+local mc=settCardScroll(104)
+lbl(mc,"VALUE THRESHOLD",22,16,250,12,11,Enum.Font.GothamBold,C.tMut)
+local monRow=Instance.new("Frame"); monRow.Size=UDim2.new(1,-24,0,38); monRow.Position=UDim2.new(0,18,0,32); monRow.BackgroundTransparency=1; monRow.Parent=mc
+local mrl=Instance.new("UIListLayout"); mrl.FillDirection=Enum.FillDirection.Horizontal; mrl.Padding=UDim.new(0,10); mrl.VerticalAlignment=Enum.VerticalAlignment.Center; mrl.Parent=monRow
 
 local moneyBtns={}; local activeFilterLbl
 local function refreshMoney()
     for i,b in ipairs(moneyBtns) do
         local on=(i==cfg.minMoneyIndex)
-        b.BackgroundColor3=on and C.accent or C.deep
-        b.TextColor3=on and C.tPrim or C.tSec
-        if on then
-            if b:FindFirstChild("UIStroke") then b.UIStroke:Destroy() end
-        else
-            if not b:FindFirstChild("UIStroke") then Instance.new("UIStroke",b).Color=C.stroke end
-        end
+        b.BackgroundColor3=on and C.accentD or C.deep; b.TextColor3=on and C.deep or C.tSec
+        if on then if b:FindFirstChild("UIStroke") then b.UIStroke:Destroy() end else if not b:FindFirstChild("UIStroke") then Instance.new("UIStroke",b).Color=C.stroke end end
     end
-    if activeFilterLbl then activeFilterLbl.Text="Active Threshold: "..moneyOptions[cfg.minMoneyIndex].label end
-    saveConfig()
+    if activeFilterLbl then activeFilterLbl.Text="Active Threshold: "..moneyOptions[cfg.minMoneyIndex].label end; saveConfig()
 end
 for i,opt in ipairs(moneyOptions) do
-    local b=Instance.new("TextButton"); b.Text=opt.label; b.Size=UDim2.new(0,66,0,32)
-    b.BackgroundColor3=C.deep; b.TextColor3=C.tSec; b.TextSize=12
-    b.Font=Enum.Font.GothamMedium; b.BorderSizePixel=0; b.Parent=monRow
-    Instance.new("UICorner",b).CornerRadius=UDim.new(0,6)
-    table.insert(moneyBtns,b)
+    local b=Instance.new("TextButton"); b.Text=opt.label; b.Size=UDim2.new(0,68,0,34); b.BackgroundColor3=C.deep; b.TextColor3=C.tSec; b.TextSize=13; b.Font=Enum.Font.GothamMedium; b.BorderSizePixel=0; b.Parent=monRow
+    Instance.new("UICorner",b).CornerRadius=UDim.new(0,8); table.insert(moneyBtns,b)
     b.MouseButton1Click:Connect(function() cfg.minMoneyIndex=i; refreshMoney() end)
 end
-activeFilterLbl=lbl(mc,"Active Threshold: "..moneyOptions[cfg.minMoneyIndex].label,20,72,200,13,12,Enum.Font.GothamBold,C.accent)
+activeFilterLbl=lbl(mc,"Active Threshold: "..moneyOptions[cfg.minMoneyIndex].label,22,78,200,16,13,Enum.Font.GothamBold,C.accentD)
 refreshMoney()
 
-local smc=settCardScroll(60)
-lbl(smc,"SILENT START",20,14,200,12,11,Enum.Font.GothamBold,C.tMut)
-lbl(smc,"Launch GUI in minimized state automatically",20,32,380,14,12,Enum.Font.Gotham,C.tSec)
-mkToggle(smc,-64,18,cfg.startMinimized,function(v) cfg.startMinimized=v; saveConfig() end)
+local smc=settCardScroll(64)
+lbl(smc,"SILENT START",22,16,200,12,11,Enum.Font.GothamBold,C.tMut)
+lbl(smc,"Launch GUI in minimized state automatically",22,34,380,16,13,Enum.Font.Gotham,C.tSec)
+mkToggle(smc,-66,19,cfg.startMinimized,function(v) cfg.startMinimized=v; saveConfig() end)
 
-local cec=settCardScroll(60)
-lbl(cec,"CLEAN ERROR GUIS",20,14,200,12,11,Enum.Font.GothamBold,C.tMut)
-lbl(cec,"Automatically destroy Roblox kick/crash popups",20,32,380,14,12,Enum.Font.Gotham,C.tSec)
-mkToggle(cec,-64,18,cfg.cleanErrorGUIs,function(v) cfg.cleanErrorGUIs=v; saveConfig() end)
+local cec=settCardScroll(64)
+lbl(cec,"CLEAN ERROR GUIS",22,16,200,12,11,Enum.Font.GothamBold,C.tMut)
+lbl(cec,"Automatically destroy Roblox kick/crash popups",22,34,380,16,13,Enum.Font.Gotham,C.tSec)
+mkToggle(cec,-66,19,cfg.cleanErrorGUIs,function(v) cfg.cleanErrorGUIs=v; saveConfig() end)
 
-local instrCard = Instance.new("Frame")
-instrCard.Size = UDim2.new(1, 0, 0, 40)
-instrCard.BackgroundTransparency = 1
-instrCard.Parent = settScroll
-lbl(instrCard,"RightShift — Toggle User Interface Visibility",0,0,400,13,12,Enum.Font.Gotham,C.tMut)
-lbl(instrCard,"Config saves to "..SAVE_FILE.." in executor root",0,16,500,13,12,Enum.Font.Gotham,C.tMut)
+local instrCard = Instance.new("Frame"); instrCard.Size = UDim2.new(1, 0, 0, 46); instrCard.BackgroundTransparency = 1; instrCard.Parent = settScroll
+lbl(instrCard,"RightShift — Toggle User Interface Visibility",0,0,400,16,14,Enum.Font.Gotham,C.tMut)
+lbl(instrCard,"Config saves to "..SAVE_FILE.." in executor root",0,20,500,16,14,Enum.Font.Gotham,C.tMut)
 
 -- ══════════════════════════════════════════════
 -- CLEAN ERROR GUI LOOP
@@ -1126,10 +967,7 @@ task.spawn(function()
         if cfg.cleanErrorGUIs then
             pcall(function()
                 local promptGui = CoreGui:FindFirstChild("RobloxPromptGui")
-                if promptGui then
-                    local overlay = promptGui:FindFirstChild("promptOverlay")
-                    if overlay then overlay:Destroy() end
-                end
+                if promptGui then local overlay = promptGui:FindFirstChild("promptOverlay"); if overlay then overlay:Destroy() end end
                 local networkGui = CoreGui:FindFirstChild("RobloxNetworkPauseNotification")
                 if networkGui then networkGui:Destroy() end
             end)
@@ -1141,34 +979,19 @@ end)
 -- WEBSOCKET
 -- ══════════════════════════════════════════════
 local function connectWS()
-    setStatus("Connecting...", C.yellow)
-    addLog("Initiating handshake to main server...", C.yellow, true)
-
+    setStatus("Connecting...", C.yellow); addLog("Initiating handshake to main server...", C.yellow, true)
     local ok, ws = pcall(function() return WebSocket.connect(WS_URL) end)
-    if not ok or not ws then
-        setStatus("Timeout", C.red)
-        addLog("Handshake failed. Retrying in 5s...", C.red, true)
-        task.delay(5, connectWS); return
-    end
+    if not ok or not ws then setStatus("Timeout", C.red); addLog("Handshake failed. Retrying in 5s...", C.red, true); task.delay(5, connectWS); return end
 
-    wsConnection = ws
-    setStatus("Connected", C.green)
-    addLog("Connection secured.", C.green, true)
+    wsConnection = ws; setStatus("Connected", C.green); addLog("Connection secured.", C.green, true)
 
     ws.OnMessage:Connect(function(raw)
         local data = parseMsg(raw)
         if not data then return end
-
         setFmtLabel(data.wasB64)
 
-        local name    = data.name
-        local money   = data.money
-        local players = data.players
-        local maxpl   = data.maxpl
-        local jobId   = data.jobId
-
+        local name, money, players, maxpl, jobId = data.name, data.money, data.players, data.maxpl, data.jobId
         if not namePassesWhitelist(name) then return end
-
         if seenJobIds[jobId] then return end
         seenJobIds[jobId] = true
 
@@ -1178,7 +1001,7 @@ local function connectWS()
 
         if isNew then
             peakMoney = money
-            if peakNameRef  then peakNameRef.Text  = name   end
+            if peakNameRef then peakNameRef.Text = name end
             if peakMoneyRef then peakMoneyRef.Text = monStr end
         end
 
@@ -1186,43 +1009,30 @@ local function connectWS()
         if lastNameRef then lastNameRef.Text = name end
         if lastMetaRef then lastMetaRef.Text = string.format("%d/%d players  ·  %s", players, maxpl, monStr) end
 
-        local minVal = moneyOptions[cfg.minMoneyIndex].value
-        if money >= minVal then
-            addLog(line, isNew and C.gold or C.green, false, jobId)
+        if money >= moneyOptions[cfg.minMoneyIndex].value then
+            local rowActions = addLog(line, isNew and C.gold or C.green, false, jobId)
             showToast(name, money, isNew)
             
+            -- 🛠️ LE AUTO FORCE JOIN ACTIVE VISUELLEMENT LE BOUTON SUR LE LOG !
             if cfg.autoForceJoin then
                 bumpStat("joined")
-                task.spawn(function()
-                    local ret = cfg.retryCount
-                    for i=1, ret do
-                        pcall(function() TeleportService:TeleportToPlaceInstance(PLACE_ID, jobId, Players.LocalPlayer) end)
-                        task.wait(0.35)
-                    end
-                end)
+                if rowActions and rowActions.TriggerForceJoin then
+                    rowActions.TriggerForceJoin()
+                end
             elseif cfg.autoJoin then
-                bumpStat("joined")
-                task.delay(0.5, function()
-                    pcall(function() TeleportService:TeleportToPlaceInstance(PLACE_ID, jobId, Players.LocalPlayer) end)
-                end)
+                bumpStat("joined"); task.delay(0.5, function() pcall(function() TeleportService:TeleportToPlaceInstance(PLACE_ID, jobId, Players.LocalPlayer) end) end)
             end
         else
-            bumpStat("skipped")
-            addLog(line, C.tMut, true)
+            bumpStat("skipped"); addLog(line, C.tMut, true)
         end
     end)
 
     ws.OnClose:Connect(function()
-        setStatus("Disconnected", C.red)
-        addLog("Connection dropped. Reconnecting in 3s...", C.red, true)
+        setStatus("Disconnected", C.red); addLog("Connection dropped. Reconnecting in 3s...", C.red, true)
         wsConnection=nil; task.delay(3, connectWS)
     end)
 end
 
 switchTab("Dashboard")
-
-if cfg.startMinimized then
-    setMinimized(true)
-end
-
+if cfg.startMinimized then setMinimized(true) end
 connectWS()
