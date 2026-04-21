@@ -3,14 +3,6 @@
 -- ║   Premium Edition • Auto Joiner          ║
 -- ╚══════════════════════════════════════════╝
 
--- ==========================================
--- 🛡️ ANTI-LEAK / HUB WHITELIST CHECK 🛡️
--- ==========================================
-if not _G.ScruliHubAuth then
-    game:GetService("Players").LocalPlayer:Kick("\n\n🛡️ SCRULI HUB PROTECT 🛡️\n\nTu n'es pas autorisé à utiliser ce script.\nVeuillez utiliser le Hub officiel Scruli.")
-    return -- Arrête le script immédiatement pour bloquer le voleur
-end
--- ==========================================
 
 local HttpService     = game:GetService("HttpService")
 local TeleportService = game:GetService("TeleportService")
@@ -104,7 +96,7 @@ local cfg = {
     whitelistEnabled = false,
     whitelist        = {},
     startMinimized   = false, 
-    cleanErrorGUIs   = false,
+    cleanErrorGUIs   = false, -- Option ajoutée
 }
 
 local moneyOptions = {
@@ -814,12 +806,12 @@ local function addLog(msg, col, isSub, jobId)
     row.BackgroundColor3=C.logBg
     row.BorderSizePixel=0
     row.LayoutOrder=logOrder
-    row.Active=true -- Remplacement du TextButton invisible pour ne plus voler les clics
     row.Parent=logScroll
 
-    -- L'animation se fait directement sur la Frame (Plus de conflits avec les boutons)
-    row.MouseEnter:Connect(function() TweenService:Create(row,TweenInfo.new(0.1),{BackgroundColor3=C.rowHov}):Play() end)
-    row.MouseLeave:Connect(function() TweenService:Create(row,TweenInfo.new(0.1),{BackgroundColor3=C.logBg}):Play() end)
+    local rh=Instance.new("TextButton"); rh.Size=UDim2.new(1,0,1,0)
+    rh.BackgroundTransparency=1; rh.Text=""; rh.ZIndex=1; rh.Parent=row
+    rh.MouseEnter:Connect(function() TweenService:Create(row,TweenInfo.new(0.1),{BackgroundColor3=C.rowHov}):Play() end)
+    rh.MouseLeave:Connect(function() TweenService:Create(row,TweenInfo.new(0.1),{BackgroundColor3=C.logBg}):Play() end)
 
     local div=Instance.new("Frame"); div.Size=UDim2.new(1,0,0,1); div.Position=UDim2.new(0,0,1,-1)
     div.BackgroundColor3=C.stroke; div.BorderSizePixel=0; div.Parent=row
@@ -829,7 +821,7 @@ local function addLog(msg, col, isSub, jobId)
     tslbl.BackgroundTransparency=1; tslbl.TextColor3=C.tMut; tslbl.TextSize=11
     tslbl.Font=Enum.Font.Gotham; tslbl.ZIndex=2; tslbl.Parent=row
 
-    local btnW = hasJob and 240 or 0
+    local btnW = hasJob and 190 or 0
     local txtLbl=Instance.new("TextLabel"); txtLbl.Text=msg
     txtLbl.Size=UDim2.new(1,-(80+btnW),1,0); txtLbl.Position=UDim2.new(0,74,0,0)
     txtLbl.BackgroundTransparency=1; txtLbl.TextColor3=col; txtLbl.TextSize=12
@@ -839,12 +831,11 @@ local function addLog(msg, col, isSub, jobId)
     txtLbl.ZIndex=2; txtLbl.Parent=row
 
     if hasJob then
-        -- 🛠️ CORRECTION : Espacement parfait des boutons pour éviter qu'ils se touchent
         local jb=Instance.new("TextButton"); jb.Text="JOIN"
         jb.Size=UDim2.new(0,64,0,26); jb.Position=UDim2.new(1,-176,0.5,-13)
         jb.BackgroundColor3=C.accentD; jb.TextColor3=Color3.fromRGB(255,255,255)
         jb.TextSize=11; jb.Font=Enum.Font.GothamBold; jb.BorderSizePixel=0
-        jb.ZIndex=10; jb.Parent=row
+        jb.ZIndex=3; jb.Parent=row
         Instance.new("UICorner",jb).CornerRadius=UDim.new(0,6)
 
         jb.MouseButton1Click:Connect(function()
@@ -861,15 +852,15 @@ local function addLog(msg, col, isSub, jobId)
         sb.Size=UDim2.new(0,94,0,26); sb.Position=UDim2.new(1,-102,0.5,-13)
         sb.BackgroundColor3=C.deep; sb.TextColor3=C.accent
         sb.TextSize=11; sb.Font=Enum.Font.GothamBold; sb.BorderSizePixel=0
-        sb.ZIndex=10; sb.Parent=row
+        sb.ZIndex=3; sb.Parent=row
         Instance.new("UICorner",sb).CornerRadius=UDim.new(0,6)
         local ssk2=Instance.new("UIStroke"); ssk2.Color=C.accent; ssk2.Parent=sb
 
         local stopB=Instance.new("TextButton"); stopB.Text="STOP"
-        stopB.Size=UDim2.new(0,46,0,26); stopB.Position=UDim2.new(1,-232,0.5,-13) -- Poussé sur la gauche pour ne pas gêner JOIN
+        stopB.Size=UDim2.new(0,46,0,26); stopB.Position=UDim2.new(1,-154,0.5,-13)
         stopB.BackgroundColor3=Color3.fromRGB(65,20,20); stopB.TextColor3=C.tPrim
         stopB.TextSize=11; stopB.Font=Enum.Font.GothamBold; stopB.BorderSizePixel=0
-        stopB.Visible=false; stopB.ZIndex=10; stopB.Parent=row
+        stopB.Visible=false; stopB.ZIndex=3; stopB.Parent=row
         Instance.new("UICorner",stopB).CornerRadius=UDim.new(0,6)
 
         sb.MouseButton1Click:Connect(function()
@@ -940,8 +931,7 @@ srchBox.Parent=srchBG
 srchBox.Focused:Connect(function() TweenService:Create(srchSk,TweenInfo.new(0.15),{Color=C.accent}):Play() end)
 srchBox.FocusLost:Connect(function() TweenService:Create(srchSk,TweenInfo.new(0.15),{Color=C.stroke}):Play() end)
 
--- 🛠️ CORRECTION : Le texte et le bouton ne se chevauchent plus
-local selCntLbl=lbl(wlPage,"0 locked",CW-160,196,80,14,12,Enum.Font.GothamBold,C.tMut,Enum.TextXAlignment.Right)
+local selCntLbl=lbl(wlPage,"0 locked",CW-60,196,80,14,12,Enum.Font.GothamBold,C.tMut,Enum.TextXAlignment.Right)
 
 local function updateSelCount()
     local n=#cfg.whitelist
