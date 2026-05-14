@@ -1,1038 +1,704 @@
--- ╔══════════════════════════════════════════╗
--- ║         SCRULI NOTIFIER V9               ║
--- ║   Apex Edition • Flawless UI & Logic     ║
--- ╚══════════════════════════════════════════╝
+-- ==========================================================
+-- SCRULI HUB BRO GIVE ME MY SOURCE BACK             
+--                                   
+-- ==========================================================
+
+local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local UserInputService = game:GetService("UserInputService")
+local RunService = game:GetService("RunService")
+local Workspace = game:GetService("Workspace")
+local LocalPlayer = Players.LocalPlayer
 
 
+local networkDir = ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Packages"):WaitForChild("Network")
+local kickEvent = networkDir:WaitForChild("rev_KickEvent")
+local strengthEvent = networkDir:WaitForChild("rev_TaviMishkal")
+local speedUpgradeEvent = networkDir:WaitForChild("rev_SPEED_UPGRADE")
+local rebirthEvent = networkDir:WaitForChild("rev_RebirthRequest")
+local stealEvent = networkDir:WaitForChild("rev_S_Steal")
+local kickCollectEvent = networkDir:FindFirstChild("rev_KickCollect")
+local bonusCollectEvent = networkDir:FindFirstChild("rev_B_Collect")
 
-local HttpService     = game:GetService("HttpService")
-local TeleportService = game:GetService("TeleportService")
-local Players         = game:GetService("Players")
-local CoreGui         = game:GetService("CoreGui")
-local TweenService    = game:GetService("TweenService")
-local UIS             = game:GetService("UserInputService")
-local SoundService    = game:GetService("SoundService")
-
-local WS_URL    = "wss://ws1.burgerharbor.uk/?token=ceMhY2gpBs%2BjzcJRLLffGEIXV%2B4O4VIcV6q%2BsL1TEeBkmc6MGWdTd2YivYEF7y9B"
-local PLACE_ID  = 109983668079237
-local SAVE_FILE = "ScruliNotifier.json"
-local SOUND_ID  = 139308638407157
-
-local function playNotificationSound()
-    local sound = Instance.new("Sound")
-    sound.SoundId = "rbxassetid://" .. SOUND_ID
-    sound.Volume = 0.5
-    sound.Parent = SoundService
-    sound:Play()
-    sound.Ended:Connect(function() sound:Destroy() end)
-    task.delay(5, function() if sound and sound.Parent then sound:Destroy() end end)
-end
-
--- ─────────────────────────────────────────────
--- BRAINROT LIST (Avec filtre Anti-Doublons)
--- ─────────────────────────────────────────────
-local RAW_BRAINROTS = {
-    "Noobini Pizzanini","Lirili Larila","Tim Cheese","FluriFlura","Talpa Di Fero","Svinina Bombardino","Pipi Kiwi","Racooni Jandelini","Pipi Corni","Noobini Santanini",
-    "Trippi Troppi","Gangster Footera","Bandito Bobritto","Boneca Ambalabu","Cacto Hipopotamo","Ta Ta Ta Ta Sahur","Tric Trac Baraboom","Pipi Avocado","Frogo Elfo",
-    "Cappuccino Assassino","Brr Brr Patapim","Trulimero Trulicina","Bambini Crostini","Bananita Dolphinita","Perochello Lemonchello","Brri Brri Bicus Dicus Bombicus",
-    "Avocadini Guffo","Salamino Penguino","Ti Ti Ti Sahur","Penguin Tree","Penguino Cocosino","Burbaloni Loliloli","Chimpazini Bananini","Ballerina Cappuccina",
-    "Chef Crabracadabra","Lionel Cactuseli","Glorbo Fruttodrillo","Blueberrini Octopusini","Strawberelli Flamingelli","Pandaccini Bananini","Cocosini Mama",
-    "Sigma Boy","Sigma Girl","Pi Pi Watermelon","Chocco Bunny","Sealo Regalo","Frigo Camelo","Orangutini Ananassini","Rhino Toasterino","Bombardiro Crocodilo",
-    "Bombombini Gusini","Cavallo Virtuso","Gorillo Watermelondrillo","Avocadorilla","Tob Tobi Tobi","Ganganzelli Trulala","Cachorrito Melonito","Elefanto Frigo",
-    "Toiletto Focaccino","Te Te Te Sahur","Tracoducotulu Delapeladustuz","Lerulerulerule","Jingle Jingle Sahur","Tree Tree Tree Sahur","Carloo","Spioniro Golubiro",
-    "Zibra Zubra Zibralini","Tigrilini Watermelini","Carrotini Brainini","Bananito Bandito","Coco Elefanto","Girafa Celestre","Gattatino Nyanino","Chihuanini Taconini",
-    "Matteo","Tralalero Tralala","Espresso Signora","Odin Din Din Dun","Statutino Libertino","Trenostruzzo Turbo 3000","Ballerino Lololo","Los Orcalitos","Dug dug dug",
-    "Tralalita Tralala","Urubini Flamenguini","Los Bombinitos","Trigoligre Frutonni","Orcalero Orcala","Bulbito Bandito Traktorito","Los Crocodillitos","Piccione Macchina",
-    "Trippi Troppi Troppa Trippa","Los Tungtungtungcitos","Tukanno Bananno","Alessio","Tipi Topi Taco","Extinct Ballerina","Capi Taco","Gattito Tacoto","Pakrahmatmamat",
-    "Tractoro Dinosauro","Corn Corn Corn Sahur","Squalanana","Los Tipi Tacos","Bombardini Tortinii","Pop pop Sahur","Ballerina Peppermintina","Yeti Claus",
-    "Ginger Globo","Frio Ninja","Ginger Cisterna","Cacasito Satalito","Aquanaut","Tartaruga Cisterna","Las Sis","La Vacca Staturno Saturnita","Chimpanzini Spiderini",
-    "Extinct Tralalero","Extinct Matteo","Los Tralaleritos","La Karkerkar Kombinasin","Karker Sahur","Las Tralaleritas","Job Job Job Sahur","Los Spyderrinis",
-    "Perrito Burrito","Graipuss Medussi","Los Jobcitos","La Grande Kombinasin","Tacorita Bicicleta","Nuclearo Dinossauro","Los 67","Money Money Puggy","Chillin Chili",
-    "La Extinct Grande","Los Tacoritas","Los Tortus","Tang Tang Kelentang","Garama and Madundung","La Secret Kombinasin","Torrtuginni Dragonfruitini","Pot Hotspot",
-    "To to to Sahur","Las Vaquitas Saturnitas","Chicleteira Bicicleteira","Agarrini la Palini","Mariachi Corazoni","Dragon Cannelloni","Los Kombinasinas","La Cucaracha",
-    "Karkerkar Kurkur","Los Hotspotsitos","La Sahur Kombinasin","Quesadilla Crocodila","Esok Sekolah","Los Matteos","Dul Dul Dul","Blackhole Goat","Nooo My Hotspot",
-    "Sammyini Spyderini","Spaghetti Tualetti","67","Los Noo My Hotspotsitos","Celularcini Viciosini","Tralaledon","Tictac Sahur","La Supreme Kombinasin","Ketupat Kepat",
-    "Ketchuru and Musturu","Burguro and Fryuro","Please my Present","La Grande","La Vacca Prese Presente","Ho Ho Ho Sahur","Chicleteira Noelteira","Cooki and Milki",
-    "La Jolly Grande","Capitano Moby","Cerberus","Skibidi Toilet","Strawberry Elephant","Meowl",
-    "Sammyni Fattini","Rosetti Tualetti","Foxini Lanternini","Reighnito sleghito","Ventoliero Pavonero","La Casa Boo","Lavadorito spinito","Cash or Card",
-    "Esok Sekhola","Nacho Spyder","Los Jolly Combinasionas","Festif 67","Antonio","Dragon Gingerini","Gold Gold Gold","Lovin Rose","Swaggy Bros","La Taco Combinaison",
-    "Lucky Grande","La Spookie Grande","Tuff toucan","La extinct Grande","La Ginger Sekolah","Baccuru and Egguru","Los Puggies","Hydra Dragon Cannelloni","Fragole La La La",
-    "Fishino Clownino","Gobbino Uniciclino","Gym Bros","Los Cupids","Popcuru and Fizzuru","Fragrama and Chococrama","Jolly sahur","Ginger Gerat","Orcaledon",
-    "Los Amigos","Evildon","Los bros","Los candies","Los primos","Dj Panda","Snailo Clovero","Spinny Hammy","Money Money reindeer","Signo Carapace","Swag soda",
-    "W or L","Cigno fulgoro","Los sweehearts","No My gold","Tacorillo Crocodillo","Chimino","No my candis","Los Planitos","Ketupat bros","Boppin Bunny","Hydra Bunny",
-    "Celestial Pegasus","Love Love Bear","Griffin","Bunny and Eggy","Rosey And Teddy","La Supreme Combinasion","big dick"
+local _G = {
+    AutoKick = false,
+    AutoCollect = false,
+    AutoStrength = false,
+    AutoSpeed = false,
+    AutoRebirth = false,
+    AutoSteal = false,
+    DodgeEnabled = false,
+    ESP = false,
+    SpeedBoost = false,
+    Orbit = false,
+    Blind = false,
+    Annoy = false,
+    FlingAll = false,
+    FakeLag = false,
+    ChatSpam = false
 }
 
-local ALL_BRAINROTS = {}
-local _seen = {}
-for _, br in ipairs(RAW_BRAINROTS) do
-    if br ~= "" and not _seen[br:lower()] then
-        table.insert(ALL_BRAINROTS, br)
-        _seen[br:lower()] = true
-    end
-end
 
--- ─────────────────────────────────────────────
--- CONFIG
--- ─────────────────────────────────────────────
-local cfg = {
-    autoJoin         = false, 
-    autoForceJoin    = false,
-    toastEnabled     = true,
-    minMoneyIndex    = 1,
-    retryCount       = 10,
-    whitelistEnabled = false,
-    whitelist        = {},
-    startMinimized   = false, 
-    cleanErrorGUIs   = false,
-}
+function LoadRayfield() 
+    local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
 
-local moneyOptions = {
-    {label="None", value=0}, {label="10M",  value=10000000}, {label="20M",  value=20000000},
-    {label="30M",  value=30000000}, {label="40M",  value=40000000}, {label="50M",  value=50000000},
-    {label="100M", value=100000000},
-}
-
-local function saveConfig()
-    pcall(function() writefile(SAVE_FILE, HttpService:JSONEncode(cfg)) end)
-end
-
-local function loadConfig()
-    local ok, data = pcall(function()
-        if isfile and isfile(SAVE_FILE) then return HttpService:JSONDecode(readfile(SAVE_FILE)) end
-    end)
-    if ok and type(data) == "table" then
-        for k,v in pairs(data) do cfg[k] = v end
-    end
-end
-loadConfig()
-cfg.autoJoin = false 
-cfg.autoForceJoin = false
-
--- ─────────────────────────────────────────────
--- PARSER
--- ─────────────────────────────────────────────
-local function fmtMoney(n)
-    if n >= 1e9  then return string.format("$%.2fB", n/1e9)
-    elseif n >= 1e6 then return string.format("$%.2fM", n/1e6)
-    elseif n >= 1e3 then return string.format("$%.1fK", n/1e3)
-    end
-    return "$"..tostring(n)
-end
-
-local function getTS() return os.date("%H:%M:%S") end
-
-local function namePassesWhitelist(name)
-    if not cfg.whitelistEnabled or #cfg.whitelist == 0 then return true end
-    local low = name:lower()
-    for _, w in ipairs(cfg.whitelist) do
-        if low:find(w:lower(), 1, true) then return true end
-    end
-    return false
-end
-
-local function isBase64(s)
-    if type(s) ~= "string" or #s == 0 then return false end
-    if #s % 4 ~= 0 then return false end
-    return s:match("^[A-Za-z0-9+/=]+$") ~= nil
-end
-
-local b64 = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"
-local function decodeB64(str)
-    local lk = {}
-    for i = 1, #b64 do lk[b64:sub(i,i)] = i-1 end
-    lk["="] = 0
-    local out = {}
-    for i = 1, #str, 4 do
-        local a,b,c,d = lk[str:sub(i,i)],lk[str:sub(i+1,i+1)],lk[str:sub(i+2,i+2)],lk[str:sub(i+3,i+3)]
-        if a and b then table.insert(out, string.char(bit32.bor(bit32.lshift(a,2),bit32.rshift(b,4)))) end
-        if b and c and str:sub(i+2,i+2) ~= "=" then table.insert(out, string.char(bit32.band(bit32.bor(bit32.lshift(b,4),bit32.rshift(c,2)),0xFF))) end
-        if c and d and str:sub(i+3,i+3) ~= "=" then table.insert(out, string.char(bit32.band(bit32.bor(bit32.lshift(c,6),d),0xFF))) end
-    end
-    return table.concat(out)
-end
-
-local function parseMsg(raw)
-    if type(raw) ~= "string" then return nil end
-
-    local cleaned = raw
-    if cleaned:sub(1,2) == "b'" or cleaned:sub(1,2) == 'b"' then
-        cleaned = cleaned:sub(3,-2)
-    end
-    cleaned = cleaned:gsub("\\x(%x%x)", function(h) return string.char(tonumber(h,16)) end)
-
-    local jsonStr = cleaned
-    local wasB64  = false
-    if isBase64(cleaned) then
-        local ok, dec = pcall(decodeB64, cleaned)
-        if ok and type(dec) == "string" and dec:sub(1,1) == "{" then
-            jsonStr = dec; wasB64 = true
-        end
-    end
-
-    local ok, data = pcall(function() return HttpService:JSONDecode(jsonStr) end)
-    if not ok or type(data) ~= "table" then return nil end
-
-    local name, money, players, maxpl, jobId
-    local wasB64Out = wasB64
-
-    if data.op == "brainrot/sighting" and type(data.data) == "table" then
-        local d = data.data
-        jobId   = tostring(d.jobId or "")
-        players = tonumber(d.players) or 0
-        maxpl   = tonumber(d.playerLimit or d.player_limit or d.maxplayers) or 0
-
-        if type(d.brainrots) == "table" and #d.brainrots > 0 then
-            local best = d.brainrots[1]
-            for _, br in ipairs(d.brainrots) do
-                if (tonumber(br.value) or 0) > (tonumber(best.value) or 0) then best = br end
-            end
-            name  = tostring(best.brainrotName or best.name or "Unknown")
-            money = tonumber(best.value) or 0
-
-            local mut = tostring(best.mutation or "Normal")
-            if mut ~= "Normal" and mut ~= "" then name = name .. " [" .. mut .. "]" end
-            if #d.brainrots > 1 then name = name .. " +" .. (#d.brainrots - 1) .. " more" end
-        else
-            name = "Unknown"; money = 0
-        end
-    else
-        name    = tostring(data.name or "Unknown")
-        money   = tonumber(data.money) or 0
-        players = tonumber(data.players) or 0
-        jobId   = tostring(data.jobid or data.job_id or "")
-        maxpl   = tonumber(data.maxplayers or data.player_limit) or 0
-
-        if money == 0 and type(data.detected_pets) == "table" then
-            for _, pet in ipairs(data.detected_pets) do
-                local m = tonumber(pet.money)
-                if m and m > money then money = m end
-            end
-        end
-
-        name = name:gsub("^[\xF0-\xF7][\x80-\xBF][\x80-\xBF][\x80-\xBF]%s*","")
-                   :gsub("^[\xE0-\xEF][\x80-\xBF][\x80-\xBF]%s*","")
-                   :match("^%s*(.-)%s*$")
-    end
-
-    if not jobId or jobId == "" then return nil end
-    return {name=name, money=money, players=players, maxpl=maxpl, jobId=jobId, wasB64=wasB64Out}
-end
-
--- ─────────────────────────────────────────────
--- V9 APEX COLOURS (ULTRA DEEP & CLEAN)
--- ─────────────────────────────────────────────
-local C = {
-    bg      = Color3.fromRGB(11, 12, 16),   
-    sidebar = Color3.fromRGB(16, 17, 22),   
-    card    = Color3.fromRGB(22, 23, 29),   
-    deep    = Color3.fromRGB(8, 9, 12),     
-    stroke  = Color3.fromRGB(38, 40, 50),   
-    
-    accent  = Color3.fromRGB(110, 60, 255), 
-    accentD = Color3.fromRGB(0, 180, 255),  
-    
-    tPrim   = Color3.fromRGB(245, 245, 255),
-    tSec    = Color3.fromRGB(150, 155, 170),
-    tMut    = Color3.fromRGB(90, 95, 110),
-    
-    green   = Color3.fromRGB(30, 210, 120), 
-    red     = Color3.fromRGB(255, 60, 90),  
-    yellow  = Color3.fromRGB(255, 190, 40), 
-    gold    = Color3.fromRGB(255, 215, 0),  
-    
-    rowHov  = Color3.fromRGB(26, 28, 35),   
-    logBg   = Color3.fromRGB(14, 15, 20),   
-}
-
--- ─────────────────────────────────────────────
--- CLEANUP & UI CORE
--- ─────────────────────────────────────────────
-if CoreGui:FindFirstChild("ScruliV9") then
-    CoreGui:FindFirstChild("ScruliV9"):Destroy()
-end
-
-local SG = Instance.new("ScreenGui")
-SG.Name = "ScruliV9"
-SG.ResetOnSpawn = false
-SG.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-SG.Parent = CoreGui
-
-local toastSlot = 0
-local function showToast(name, money, isGold)
-    if not cfg.toastEnabled then return end
-    playNotificationSound()
-    
-    toastSlot += 1
-    local yOff = 20 + (toastSlot-1)*85
-    local col  = isGold and C.gold or C.accentD
-    local bg   = C.sidebar
-
-    local T = Instance.new("Frame")
-    T.Size=UDim2.new(0,300,0,75)
-    T.Position=UDim2.new(1,20,0,yOff)
-    T.BackgroundColor3=bg
-    T.BorderSizePixel=0; T.Parent=SG
-    Instance.new("UICorner",T).CornerRadius=UDim.new(0,10)
-    local sk=Instance.new("UIStroke"); sk.Color=C.stroke; sk.Thickness=1; sk.Parent=T
-
-    local bar=Instance.new("Frame")
-    bar.Size=UDim2.new(0,4,1,-24); bar.Position=UDim2.new(0,12,0,12)
-    bar.BackgroundColor3=Color3.fromRGB(255,255,255); bar.BorderSizePixel=0; bar.Parent=T
-    Instance.new("UICorner",bar).CornerRadius=UDim.new(1,0)
-    
-    local bGrad = Instance.new("UIGradient")
-    bGrad.Color = ColorSequence.new({
-        ColorSequenceKeypoint.new(0, col),
-        ColorSequenceKeypoint.new(1, isGold and Color3.fromRGB(255,160,0) or C.accent)
+    local Window = Rayfield:CreateWindow({
+        Name = "scruli hub | Developed fort_guys123",
+        LoadingTitle = "loading the  Hub...",
+        LoadingSubtitle = "Connecting to the server",
+        ConfigurationSaving = { Enabled = false },
+        Discord = { 
+            Enabled = true, 
+            Invite = "bFJmhqcUXG", 
+            RememberJoins = true 
+        },
+        KeySystem = false 
     })
-    bGrad.Rotation = 90
-    bGrad.Parent = bar
 
-    local function tl(txt,y,sz,font,tc)
-        local l=Instance.new("TextLabel"); l.Text=txt
-        l.Size=UDim2.new(1,-36,0,sz+2); l.Position=UDim2.new(0,26,0,y)
-        l.BackgroundTransparency=1; l.TextColor3=tc; l.TextSize=sz
-        l.Font=font; l.TextXAlignment=Enum.TextXAlignment.Left
-        l.TextTruncate=Enum.TextTruncate.AtEnd; l.Parent=T
+ 
+    local FarmTab = Window:CreateTab("Auto Farm", 4483362458)
+    local PlayerTab = Window:CreateTab("player/visual", 4483362458)
+    local TrollTab = Window:CreateTab("Troll ", 4483362458)
+
+-- ==========================================
+--FARM
+-- ==========================================
+FarmTab:CreateSection("FARM")
+
+
+local function getKickReadyPart()
+    for _, v in pairs(Workspace:GetDescendants()) do
+        if string.lower(v.Name) == "kickready" and v:IsA("BasePart") then
+            return v
+        end
     end
-    tl(isGold and "NEW PEAK REACHED" or "SERVER DETECTED", 12, 10, Enum.Font.GothamBold, col)
-    tl(name, 26, 14, Enum.Font.GothamBold, C.tPrim)
-    tl(fmtMoney(money), 46, 12, Enum.Font.GothamMedium, C.tSec)
+    return nil
+end
 
-    TweenService:Create(T,TweenInfo.new(0.5,Enum.EasingStyle.Quint,Enum.EasingDirection.Out), {Position=UDim2.new(1,-320,0,yOff)}):Play()
+FarmTab:CreateButton({
+    Name = "AUTO KICK PERFECT (CLICK 2 TIME)",
+    Callback = function()
+        local char = LocalPlayer.Character
+        local hrp = char and char:FindFirstChild("HumanoidRootPart")
         
-    task.delay(4.5,function()
-        local o=TweenService:Create(T,TweenInfo.new(0.4,Enum.EasingStyle.Quint,Enum.EasingDirection.In), {Position=UDim2.new(1,20,0,yOff)})
-        o:Play(); o.Completed:Connect(function() T:Destroy(); toastSlot=math.max(0,toastSlot-1) end)
-    end)
-end
-
--- ─────────────────────────────────────────────
--- ROOT (APEX DESIGN)
--- ─────────────────────────────────────────────
-local Root=Instance.new("Frame")
-Root.Name="Root"; Root.Size=UDim2.new(0,840,0,520)
-Root.Position=UDim2.new(0.5,-420,0.5,-260)
-Root.BackgroundColor3=C.bg; Root.BorderSizePixel=0
-Root.Active=true; Root.Draggable=true; Root.Parent=SG
-Instance.new("UICorner",Root).CornerRadius=UDim.new(0,16)
-local rootSk=Instance.new("UIStroke"); rootSk.Color=C.stroke; rootSk.Thickness=1; rootSk.Parent=Root
-
-local shadow = Instance.new("ImageLabel")
-shadow.AnchorPoint = Vector2.new(0.5, 0.5)
-shadow.Position = UDim2.new(0.5, 0, 0.5, 15)
-shadow.Size = UDim2.new(1, 80, 1, 80)
-shadow.BackgroundTransparency = 1
-shadow.Image = "rbxassetid://1316045217"
-shadow.ImageColor3 = Color3.fromRGB(0,0,0)
-shadow.ImageTransparency = 0.35
-shadow.ZIndex = -1
-shadow.Parent = Root
-
-local topLine=Instance.new("Frame"); topLine.Size=UDim2.new(1,0,0,3)
-topLine.Position=UDim2.new(0,0,0,0); topLine.BackgroundColor3=Color3.fromRGB(255,255,255)
-topLine.BorderSizePixel=0; topLine.Parent=Root
-Instance.new("UICorner",topLine).CornerRadius=UDim.new(1,0)
-local tGrad = Instance.new("UIGradient")
-tGrad.Color = ColorSequence.new({
-    ColorSequenceKeypoint.new(0, C.accentD),
-    ColorSequenceKeypoint.new(0.5, C.accent),
-    ColorSequenceKeypoint.new(1, C.accentD)
-})
-tGrad.Parent = topLine
-
--- ─────────────────────────────────────────────
--- PILL (Minimized GUI)
--- ─────────────────────────────────────────────
-local Pill=Instance.new("Frame")
-Pill.Name="Pill"; Pill.Size=UDim2.new(0,290,0,44)
-Pill.Position=UDim2.new(0.5,-145,1,-80)
-Pill.BackgroundColor3=C.sidebar; Pill.BorderSizePixel=0
-Pill.Visible=false; Pill.Active=true; Pill.Draggable=true; Pill.Parent=SG
-Instance.new("UICorner",Pill).CornerRadius=UDim.new(1,0)
-local pillSk=Instance.new("UIStroke"); pillSk.Color=C.stroke; pillSk.Thickness=1; pillSk.Parent=Pill
-
-local pillDot=Instance.new("Frame"); pillDot.Size=UDim2.new(0,8,0,8)
-pillDot.Position=UDim2.new(0,18,0.5,-4); pillDot.BackgroundColor3=C.red
-pillDot.BorderSizePixel=0; pillDot.Parent=Pill
-Instance.new("UICorner",pillDot).CornerRadius=UDim.new(1,0)
-
-local pillText=Instance.new("TextLabel"); pillText.Text="Scruli | 0 servers"
-pillText.Size=UDim2.new(0,120,1,0); pillText.Position=UDim2.new(0,34,0,0)
-pillText.BackgroundTransparency=1; pillText.TextColor3=C.tPrim; pillText.TextSize=13
-pillText.Font=Enum.Font.GothamMedium; pillText.TextXAlignment=Enum.TextXAlignment.Left
-pillText.Parent=Pill
-
-local pillExpandBtn=Instance.new("TextButton"); pillExpandBtn.Text="Open UI"
-pillExpandBtn.Size=UDim2.new(0,70,0,28); pillExpandBtn.Position=UDim2.new(1,-78,0.5,-14)
-pillExpandBtn.BackgroundColor3=C.card; pillExpandBtn.TextColor3=C.tPrim
-pillExpandBtn.TextSize=11; pillExpandBtn.Font=Enum.Font.GothamBold
-pillExpandBtn.BorderSizePixel=0; pillExpandBtn.Parent=Pill
-Instance.new("UICorner",pillExpandBtn).CornerRadius=UDim.new(1,0)
-local pbtnSk=Instance.new("UIStroke"); pbtnSk.Color=C.stroke; pbtnSk.Parent=pillExpandBtn
-
-local minimized=false; local guiVisible=true
-local function setMinimized(v)
-    minimized=v; Root.Visible=not v; Pill.Visible=v
-end
-pillExpandBtn.MouseButton1Click:Connect(function() setMinimized(false) end)
-
-UIS.InputBegan:Connect(function(inp,gpe)
-    if gpe then return end
-    if inp.KeyCode==Enum.KeyCode.RightShift then
-        if minimized then setMinimized(false)
-        else guiVisible=not guiVisible; Root.Visible=guiVisible end
-    end
-end)
-
--- ─────────────────────────────────────────────
--- SIDEBAR (TOTALEMENT RÉPARÉE POUR LES ONGLETS)
--- ─────────────────────────────────────────────
-local Sidebar=Instance.new("Frame"); Sidebar.Size=UDim2.new(0,210,1,0)
-Sidebar.Position=UDim2.new(0,0,0,0) 
-Sidebar.BackgroundColor3=C.sidebar; Sidebar.BorderSizePixel=0; Sidebar.Parent=Root
-Instance.new("UICorner",Sidebar).CornerRadius=UDim.new(0,16)
-
-local sbHideCorner = Instance.new("Frame")
-sbHideCorner.Size = UDim2.new(0,16,1,0); sbHideCorner.Position = UDim2.new(1,-16,0,0)
-sbHideCorner.BackgroundColor3 = C.sidebar; sbHideCorner.BorderSizePixel = 0; sbHideCorner.Parent = Sidebar
-
-local sbd=Instance.new("Frame"); sbd.Size=UDim2.new(0,1,1,0)
-sbd.Position = UDim2.new(1,0,0,0)
-sbd.BackgroundColor3=C.stroke; sbd.BorderSizePixel=0; sbd.Parent=Sidebar
-
-local logoF=Instance.new("Frame"); logoF.Size=UDim2.new(0,44,0,44)
-logoF.Position=UDim2.new(0,26,0,28); logoF.BackgroundColor3=Color3.fromRGB(255,255,255)
-logoF.BorderSizePixel=0; logoF.Parent=Sidebar
-Instance.new("UICorner",logoF).CornerRadius=UDim.new(0,12)
-local lGrad = Instance.new("UIGradient")
-lGrad.Color = ColorSequence.new({ColorSequenceKeypoint.new(0, C.accent), ColorSequenceKeypoint.new(1, C.accentD)})
-lGrad.Rotation = 45; lGrad.Parent = logoF
-
-local ll=Instance.new("TextLabel"); ll.Text="S"; ll.Size=UDim2.new(1,0,1,0)
-ll.BackgroundTransparency=1; ll.TextColor3=Color3.fromRGB(255,255,255)
-ll.TextSize=24; ll.Font=Enum.Font.GothamBold; ll.Parent=logoF
-
-local bn=Instance.new("TextLabel"); bn.Text="SCRULI"
-bn.Size=UDim2.new(0,100,0,20); bn.Position=UDim2.new(0,84,0,28)
-bn.BackgroundTransparency=1; bn.TextColor3=C.tPrim; bn.TextSize=18
-bn.Font=Enum.Font.GothamBold; bn.TextXAlignment=Enum.TextXAlignment.Left; bn.Parent=Sidebar
-
-local bnSub=Instance.new("TextLabel"); bnSub.Text="NIGER EDITION"
-bnSub.Size=UDim2.new(0,100,0,14); bnSub.Position=UDim2.new(0,84,0,52)
-bnSub.BackgroundTransparency=1; bnSub.TextColor3=C.accentD; bnSub.TextSize=10
-bnSub.Font=Enum.Font.GothamBold; bnSub.TextXAlignment=Enum.TextXAlignment.Left; bnSub.Parent=Sidebar
-
-local TabList=Instance.new("Frame"); TabList.Size=UDim2.new(1,0,1,-220)
-TabList.Position=UDim2.new(0,0,0,120); TabList.BackgroundTransparency=1; TabList.Parent=Sidebar
-local tlo=Instance.new("UIListLayout"); tlo.Padding=UDim.new(0,10); tlo.Parent=TabList
-local tpad=Instance.new("UIPadding"); tpad.PaddingLeft=UDim.new(0,20); tpad.PaddingRight=UDim.new(0,20); tpad.Parent=TabList
-
-local Content=Instance.new("Frame"); Content.Size=UDim2.new(1,-210,1,0)
-Content.Position=UDim2.new(0,210,0,0); Content.BackgroundTransparency=1
-Content.ClipsDescendants=true; Content.Parent=Root
-
-local Pages={}; local TabBtns={}
-
-local function makePage(name)
-    local f=Instance.new("Frame"); f.Name=name; f.Size=UDim2.new(1,0,1,0)
-    f.BackgroundTransparency=1; f.Visible=false; f.Parent=Content
-    Pages[name]=f; return f
-end
-
-local function switchTab(name)
-    for n,p in pairs(Pages) do p.Visible=(n==name) end
-    for n,b in pairs(TabBtns) do
-        local on=(n==name)
-        b.BackgroundColor3=on and C.card or C.sidebar
-        b.BackgroundTransparency=on and 0 or 1
-        
-        local icon = b:FindFirstChild("Icon")
-        if icon then icon.TextColor3 = on and C.accentD or C.tMut end
-        
-        local txt = b:FindFirstChild("Title")
-        if txt then txt.TextColor3 = on and C.tPrim or C.tSec end
-    end
-end
-
-local tabDefs={
-    {name="Dashboard",icon="◈"},
-    {name="Log",      icon="≡"},
-    {name="Whitelist",icon="⊞"},
-    {name="Settings", icon="⚙"},
-}
-
--- 🛠️ CORRECTION DÉFINITIVE DES ONGLETS (Textes séparés des Icônes)
-for _,t in ipairs(tabDefs) do
-    local b=Instance.new("TextButton"); b.Name=t.name
-    b.Text=""; b.Size=UDim2.new(1,0,0,44) -- Le texte principal est vide
-    b.BackgroundColor3=C.sidebar; b.BorderSizePixel=0; b.Parent=TabList
-    Instance.new("UICorner",b).CornerRadius=UDim.new(0,10)
-    
-    local icon = Instance.new("TextLabel"); icon.Name="Icon"
-    icon.Text = t.icon; icon.Size=UDim2.new(0,44,1,0); icon.Position=UDim2.new(0,0,0,0)
-    icon.BackgroundTransparency=1; icon.TextColor3=C.tMut; icon.TextSize=18
-    icon.Font=Enum.Font.Gotham; icon.Parent=b
-    
-    local title = Instance.new("TextLabel"); title.Name="Title"
-    title.Text = t.name; title.Size=UDim2.new(1,-44,1,0); title.Position=UDim2.new(0,44,0,0)
-    title.BackgroundTransparency=1; title.TextColor3=C.tSec; title.TextSize=14
-    title.Font=Enum.Font.GothamBold; title.TextXAlignment=Enum.TextXAlignment.Left; title.Parent=b
-    
-    TabBtns[t.name]=b; makePage(t.name)
-    b.MouseButton1Click:Connect(function() switchTab(t.name) end)
-end
-
-local function sideBtnF(text,y,bg,tc)
-    local b=Instance.new("TextButton"); b.Text=text
-    b.Size=UDim2.new(1,-40,0,38); b.Position=UDim2.new(0,20,1,y)
-    b.BackgroundColor3=bg; b.TextColor3=tc; b.TextSize=12
-    b.Font=Enum.Font.GothamBold; b.BorderSizePixel=0; b.Parent=Sidebar
-    Instance.new("UICorner",b).CornerRadius=UDim.new(1,0) -- Pill shape
-    local bSk = Instance.new("UIStroke"); bSk.Color=C.stroke; bSk.Parent=b
-    return b
-end
-local saveBtn  = sideBtnF("Save Config", -150, C.card, C.tPrim)
-local minBtn   = sideBtnF("Minimize UI", -100, C.card, C.tSec)
-local closeBtn = sideBtnF("Close Script", -50, Color3.fromRGB(45,15,20), C.red)
-
-saveBtn.MouseButton1Click:Connect(function()
-    saveConfig(); saveBtn.Text="Saved ✓"; saveBtn.TextColor3=C.green
-    task.delay(2,function() saveBtn.Text="Save Config"; saveBtn.TextColor3=C.tPrim end)
-end)
-minBtn.MouseButton1Click:Connect(function() setMinimized(true) end)
-closeBtn.MouseButton1Click:Connect(function()
-    if wsConnection then pcall(function() wsConnection:Close() end) end
-    SG:Destroy()
-end)
-
--- ─────────────────────────────────────────────
--- UI HELPERS
--- ─────────────────────────────────────────────
-local CW = 840 - 210 - 48 -- Width of content minus sidebar and padding
-
-local function card(parent,x,y,w,h)
-    local f=Instance.new("Frame"); f.Size=UDim2.new(0,w,0,h)
-    f.Position=UDim2.new(0,x,0,y); f.BackgroundColor3=C.card
-    f.BorderSizePixel=0; f.Parent=parent
-    Instance.new("UICorner",f).CornerRadius=UDim.new(0,12)
-    local s=Instance.new("UIStroke"); s.Color=C.stroke; s.Thickness=1; s.Parent=f
-    return f
-end
-
-local function lbl(parent,text,x,y,w,h,sz,font,col,align)
-    local l=Instance.new("TextLabel"); l.Text=text
-    l.Size=UDim2.new(0,w,0,h); l.Position=UDim2.new(0,x,0,y)
-    l.BackgroundTransparency=1; l.TextColor3=col or C.tSec
-    l.TextSize=sz or 12; l.Font=font or Enum.Font.Gotham
-    l.TextXAlignment=align or Enum.TextXAlignment.Left; l.Parent=parent; return l
-end
-
-local function mkToggle(parent,x,y,initVal,onChange)
-    local on=initVal
-    local track=Instance.new("Frame"); track.Size=UDim2.new(0,50,0,26)
-    track.Position=UDim2.new(1,x,0,y)
-    track.BackgroundColor3=on and C.accentD or C.deep
-    track.BorderSizePixel=0; track.Parent=parent
-    Instance.new("UICorner",track).CornerRadius=UDim.new(1,0)
-    local s = Instance.new("UIStroke"); s.Color = C.stroke; s.Parent=track
-    
-    local thumb=Instance.new("Frame"); thumb.Size=UDim2.new(0,22,0,22)
-    thumb.Position=on and UDim2.new(1,-24,0.5,-11) or UDim2.new(0,2,0.5,-11)
-    thumb.BackgroundColor3=Color3.fromRGB(255,255,255)
-    thumb.BorderSizePixel=0; thumb.Parent=track
-    Instance.new("UICorner",thumb).CornerRadius=UDim.new(1,0)
-    
-    local ts = Instance.new("ImageLabel"); ts.Size=UDim2.new(1,12,1,12)
-    ts.Position=UDim2.new(0.5,0,0.5,2); ts.AnchorPoint=Vector2.new(0.5,0.5)
-    ts.BackgroundTransparency=1; ts.Image="rbxassetid://1316045217"
-    ts.ImageColor3=Color3.fromRGB(0,0,0); ts.ImageTransparency=0.6
-    ts.ZIndex=thumb.ZIndex-1; ts.Parent=thumb
-    
-    local tbtn=Instance.new("TextButton"); tbtn.Size=UDim2.new(1,0,1,0)
-    tbtn.BackgroundTransparency=1; tbtn.Text=""; tbtn.Parent=track
-    local ti=TweenInfo.new(0.25,Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
-    
-    tbtn.MouseButton1Click:Connect(function()
-        on=not on
-        TweenService:Create(track,ti,{BackgroundColor3=on and C.accentD or C.deep}):Play()
-        TweenService:Create(thumb,ti,{
-            Position=on and UDim2.new(1,-24,0.5,-11) or UDim2.new(0,2,0.5,-11)
-        }):Play()
-        if onChange then onChange(on) end
-    end)
-    return track,thumb
-end
-
--- ─────────────────────────────────────────────
--- SHARED STATE
--- ─────────────────────────────────────────────
-local wsConnection
-local seenJobIds = {}
-local statDotRef,statTextRef
-local statCounts={seen=0,joined=0,skipped=0}
-local statNumRefs={}
-local lastNameRef,lastMetaRef,peakNameRef,peakMoneyRef
-local peakMoney=0
-
-local logScroll
-
-local function setStatus(text,col)
-    if statTextRef then statTextRef.Text=text end
-    if statDotRef  then statDotRef.BackgroundColor3=col end
-    pillDot.BackgroundColor3=col
-end
-
-local function bumpStat(k)
-    statCounts[k]+=1
-    if statNumRefs[k] then statNumRefs[k].Text=tostring(statCounts[k]) end
-    pillText.Text="Scruli | "..statCounts.seen.." servers"
-end
-
--- ══════════════════════════════════════════════
--- DASHBOARD
--- ══════════════════════════════════════════════
-local dash=Pages["Dashboard"]
-lbl(dash,"Dashboard",24,24,300,28,26,Enum.Font.GothamBold,C.tPrim)
-lbl(dash,"Live network monitoring & telemetry",24,54,400,16,14,Enum.Font.Gotham,C.tMut)
-
-local sc=card(dash,24,90,CW,64)
-local dot=Instance.new("Frame"); dot.Size=UDim2.new(0,10,0,10)
-dot.Position=UDim2.new(0,20,0.5,-5); dot.BackgroundColor3=C.red
-dot.BorderSizePixel=0; dot.Parent=sc
-Instance.new("UICorner",dot).CornerRadius=UDim.new(1,0)
-statDotRef=dot
-lbl(sc,"SYSTEM STATUS",42,16,160,12,11,Enum.Font.GothamBold,C.tMut)
-statTextRef=lbl(sc,"Disconnected",42,34,280,18,15,Enum.Font.GothamBold,C.tPrim)
-
-local colW=math.floor((CW-20)/3)
-local sDefs={{key="seen",label="PACKETS SEEN",col=C.accentD},{key="joined",label="NODES JOINED",col=C.green},{key="skipped",label="SKIPPED",col=C.tSec}}
-for i,s in ipairs(sDefs) do
-    local sc2=card(dash,24+(i-1)*(colW+10),164,colW,80)
-    statNumRefs[s.key]=lbl(sc2,"0",0,18,colW,28,26,Enum.Font.GothamBold,s.col,Enum.TextXAlignment.Center)
-    lbl(sc2,s.label,0,54,colW,12,11,Enum.Font.GothamBold,C.tMut,Enum.TextXAlignment.Center)
-end
-
-local hw=math.floor((CW-12)/2)
-local lc=card(dash,24,254,hw,80)
-lbl(lc,"LAST NODE ACQUIRED",20,16,200,12,11,Enum.Font.GothamBold,C.tMut)
-lastNameRef=lbl(lc,"Awaiting sync...",20,34,hw-40,18,15,Enum.Font.GothamBold,C.tPrim)
-lastMetaRef=lbl(lc,"...",20,56,hw-40,14,13,Enum.Font.Gotham,C.tSec)
-
-local pc=card(dash,hw+36,254,hw,80)
-lbl(pc,"SESSION PEAK NODE",20,16,200,12,11,Enum.Font.GothamBold,C.tMut)
-peakNameRef=lbl(pc,"NONE",20,34,hw-40,18,15,Enum.Font.GothamBold,C.gold)
-peakMoneyRef=lbl(pc,"...",20,56,hw-40,14,13,Enum.Font.Gotham,C.tSec)
-
-local wlCard=card(dash,24,344,CW,46)
-local wlDot2=Instance.new("Frame"); wlDot2.Size=UDim2.new(0,8,0,8)
-wlDot2.Position=UDim2.new(0,20,0.5,-4); wlDot2.BackgroundColor3=C.tMut
-wlDot2.BorderSizePixel=0; wlDot2.Parent=wlCard
-Instance.new("UICorner",wlDot2).CornerRadius=UDim.new(1,0)
-local wlStatusLbl=lbl(wlCard,"Filter: OFF -> Processing all targets",42,0,500,46,14,Enum.Font.GothamMedium,C.tSec)
-
-local function updateWLIndicator()
-    if cfg.whitelistEnabled and #cfg.whitelist>0 then
-        wlDot2.BackgroundColor3=C.green; wlStatusLbl.Text="Filter: ON -> "..#cfg.whitelist.." active targets"; wlStatusLbl.TextColor3=C.green
-    elseif cfg.whitelistEnabled then
-        wlDot2.BackgroundColor3=C.yellow; wlStatusLbl.Text="Filter: ON -> No targets selected"; wlStatusLbl.TextColor3=C.yellow
-    else
-        wlDot2.BackgroundColor3=C.tMut; wlStatusLbl.Text="Filter: OFF -> Processing all targets"; wlStatusLbl.TextColor3=C.tSec
-    end
-end
-updateWLIndicator()
-
-local fmtCard=card(dash,24,400,CW,46)
-local fmtDot=Instance.new("Frame"); fmtDot.Size=UDim2.new(0,8,0,8)
-fmtDot.Position=UDim2.new(0,20,0.5,-4); fmtDot.BackgroundColor3=C.tMut
-fmtDot.BorderSizePixel=0; fmtDot.Parent=fmtCard
-Instance.new("UICorner",fmtDot).CornerRadius=UDim.new(1,0)
-local fmtLbl=lbl(fmtCard,"Payload Format: Awaiting...",42,0,500,46,14,Enum.Font.GothamMedium,C.tSec)
-
-local function setFmtLabel(isB64)
-    if isB64 then
-        fmtDot.BackgroundColor3=C.accentD; fmtLbl.Text="Payload Format: Base64 Decoding Active"; fmtLbl.TextColor3=C.accentD
-    else
-        fmtDot.BackgroundColor3=C.green; fmtLbl.Text="Payload Format: Standard JSON"; fmtLbl.TextColor3=C.green
-    end
-end
-
--- ══════════════════════════════════════════════
--- LOG PAGE & SPAM INPUT
--- ══════════════════════════════════════════════
-local logPage=Pages["Log"]
-lbl(logPage,"Live Event Logs",24,24,300,28,26,Enum.Font.GothamBold,C.tPrim)
-lbl(logPage,"Real-time node interception & interaction",24,54,420,16,14,Enum.Font.Gotham,C.tMut)
-
-lbl(logPage,"FORCE TRIES:",330,30,100,12,11,Enum.Font.GothamBold,C.tMut)
-
-local retryInputBg=Instance.new("Frame"); retryInputBg.Size=UDim2.new(0,74,0,34)
-retryInputBg.Position=UDim2.new(0,414,0,18); retryInputBg.BackgroundColor3=C.deep
-retryInputBg.BorderSizePixel=0; retryInputBg.Parent=logPage
-Instance.new("UICorner",retryInputBg).CornerRadius=UDim.new(0,8)
-local riSk=Instance.new("UIStroke"); riSk.Color=C.stroke; riSk.Parent=retryInputBg
-
-local retryInputBox = Instance.new("TextBox")
-retryInputBox.Size = UDim2.new(1, 0, 1, 0)
-retryInputBox.BackgroundTransparency = 1
-retryInputBox.Text = tostring(cfg.retryCount)
-retryInputBox.TextColor3 = C.accentD
-retryInputBox.TextSize = 14
-retryInputBox.Font = Enum.Font.GothamBold
-retryInputBox.Parent = retryInputBg
-
-retryInputBox.FocusLost:Connect(function()
-    local val = tonumber(retryInputBox.Text)
-    if val and val > 0 then cfg.retryCount = math.floor(val); saveConfig() else retryInputBox.Text = tostring(cfg.retryCount) end
-end)
-
-local clearBtn=Instance.new("TextButton"); clearBtn.Text="Clear Logs"
-clearBtn.Size=UDim2.new(0,84,0,34); clearBtn.Position=UDim2.new(1,-108,0,18)
-clearBtn.BackgroundColor3=Color3.fromRGB(35,20,25); clearBtn.TextColor3=C.tSec
-clearBtn.TextSize=12; clearBtn.Font=Enum.Font.GothamMedium; clearBtn.BorderSizePixel=0
-clearBtn.Parent=logPage; Instance.new("UICorner",clearBtn).CornerRadius=UDim.new(0,8)
-Instance.new("UIStroke",clearBtn).Color=C.stroke
-
-logScroll=Instance.new("ScrollingFrame")
-logScroll.Name="LogScroll"
-logScroll.Size=UDim2.new(1,-48,1,-80)
-logScroll.Position=UDim2.new(0,24,0,74)
-logScroll.BackgroundColor3=C.bg
-logScroll.BorderSizePixel=0
-logScroll.ScrollBarThickness=0 -- Cache la scrollbar pour faire ultra propre
-logScroll.ScrollingDirection=Enum.ScrollingDirection.Y
-logScroll.CanvasSize=UDim2.new(0,0,0,0)
-logScroll.AutomaticCanvasSize=Enum.AutomaticSize.Y
-logScroll.Parent=logPage
-
-local logLL=Instance.new("UIListLayout")
-logLL.Padding=UDim.new(0,8) -- Espace parfait entre chaque carte log
-logLL.SortOrder=Enum.SortOrder.LayoutOrder
-logLL.FillDirection=Enum.FillDirection.Vertical
-logLL.Parent=logScroll
-
-local logPad=Instance.new("UIPadding"); logPad.PaddingBottom=UDim.new(0,10); logPad.Parent=logScroll
-local logOrder=0
-
-local function addLog(msg, col, isSub, jobId)
-    col = col or C.tSec
-    local hasJob = jobId and jobId ~= ""
-    logOrder += 1
-
-    -- 🛠️ DESIGN : Chaque Log est une VRAIE carte indépendante.
-    local row=Instance.new("Frame")
-    row.Name="Row"
-    row.Size=UDim2.new(1,0,0,48)
-    row.BackgroundColor3=C.card
-    row.BorderSizePixel=0
-    row.LayoutOrder=logOrder
-    row.Active=true 
-    row.Parent=logScroll
-    Instance.new("UICorner",row).CornerRadius=UDim.new(0,10)
-    Instance.new("UIStroke",row).Color=C.stroke
-
-    row.MouseEnter:Connect(function() TweenService:Create(row,TweenInfo.new(0.15),{BackgroundColor3=C.rowHov}):Play() end)
-    row.MouseLeave:Connect(function() TweenService:Create(row,TweenInfo.new(0.15),{BackgroundColor3=C.card}):Play() end)
-
-    local tslbl=Instance.new("TextLabel"); tslbl.Text=getTS()
-    tslbl.Size=UDim2.new(0,60,1,0); tslbl.Position=UDim2.new(0,16,0,0)
-    tslbl.BackgroundTransparency=1; tslbl.TextColor3=C.tMut; tslbl.TextSize=12
-    tslbl.Font=Enum.Font.Gotham; tslbl.ZIndex=2; tslbl.Parent=row
-
-    -- 🛠️ LIMITATION STRICTE DU TEXTE POUR NE JAMAIS TOUCHER LES BOUTONS
-    local txtLbl=Instance.new("TextLabel"); txtLbl.Text=msg
-    txtLbl.Size=UDim2.new(1, hasJob and -280 or -80, 1, 0) 
-    txtLbl.Position=UDim2.new(0,80,0,0)
-    txtLbl.BackgroundTransparency=1; txtLbl.TextColor3=col; txtLbl.TextSize=14
-    txtLbl.Font=isSub and Enum.Font.Gotham or Enum.Font.GothamMedium
-    txtLbl.TextTruncate=Enum.TextTruncate.AtEnd
-    txtLbl.TextXAlignment=Enum.TextXAlignment.Left
-    txtLbl.ZIndex=2; txtLbl.Parent=row
-
-    local actionFunctions = {}
-
-    if hasJob then
-        -- 🛠️ BOUTONS AVEC ANCHORPOINT FIXE SUR LA DROITE (Impossible qu'ils se décalent)
-        local jb=Instance.new("TextButton"); jb.Text="JOIN"
-        jb.Size=UDim2.new(0,66,0,30); jb.Position=UDim2.new(1,-12,0.5,0)
-        jb.AnchorPoint=Vector2.new(1, 0.5)
-        jb.BackgroundColor3=C.accentD; jb.TextColor3=C.deep
-        jb.TextSize=12; jb.Font=Enum.Font.GothamBold; jb.BorderSizePixel=0
-        jb.ZIndex=10; jb.Parent=row
-        Instance.new("UICorner",jb).CornerRadius=UDim.new(1,0)
-
-        jb.MouseButton1Click:Connect(function()
-            jb.Text="..."
-            task.delay(0.4,function()
-                pcall(function() TeleportService:TeleportToPlaceInstance(PLACE_ID,jobId,Players.LocalPlayer) end)
-                jb.Text="SENT"; jb.BackgroundColor3=C.green
-            end)
-        end)
-
-        local spamming=false
-        local sb=Instance.new("TextButton")
-        sb.Text="FORCE JOIN"
-        sb.Size=UDim2.new(0,100,0,30); sb.Position=UDim2.new(1,-86,0.5,0)
-        sb.AnchorPoint=Vector2.new(1, 0.5)
-        sb.BackgroundColor3=C.deep; sb.TextColor3=C.accentD
-        sb.TextSize=12; sb.Font=Enum.Font.GothamBold; sb.BorderSizePixel=0
-        sb.ZIndex=10; sb.Parent=row
-        Instance.new("UICorner",sb).CornerRadius=UDim.new(1,0)
-        local ssk2=Instance.new("UIStroke"); ssk2.Color=C.accentD; ssk2.Parent=sb
-
-        local stopB=Instance.new("TextButton"); stopB.Text="STOP"
-        stopB.Size=UDim2.new(0,54,0,30); stopB.Position=UDim2.new(1,-194,0.5,0)
-        stopB.AnchorPoint=Vector2.new(1, 0.5)
-        stopB.BackgroundColor3=Color3.fromRGB(65,20,30); stopB.TextColor3=C.tPrim
-        stopB.TextSize=12; stopB.Font=Enum.Font.GothamBold; stopB.BorderSizePixel=0
-        stopB.Visible=false; stopB.ZIndex=10; stopB.Parent=row
-        Instance.new("UICorner",stopB).CornerRadius=UDim.new(1,0)
-
-        local function executeForceJoin()
-            if spamming then return end
-            local ret = tonumber(cfg.retryCount) or 10
-            if ret <= 0 then return end
-
-            spamming=true; stopB.Visible=true
-            sb.BackgroundColor3 = C.accentD
-            sb.TextColor3 = C.deep
-            
-            task.spawn(function()
-                for i=1,ret do
-                    if not spamming then break end
-                    if sb and sb.Parent then sb.Text="AUTO "..i.."/"..ret end
-                    pcall(function() TeleportService:TeleportToPlaceInstance(PLACE_ID,jobId,Players.LocalPlayer) end)
-                    task.wait(0.3) 
-                end
-                spamming=false; if stopB and stopB.Parent then stopB.Visible=false end
-                if sb and sb.Parent then
-                    sb.Text="DONE"; sb.BackgroundColor3=C.deep; sb.TextColor3=C.green; ssk2.Color=C.green
-                    task.delay(2, function()
-                        if sb and sb.Parent then sb.Text="FORCE JOIN"; sb.TextColor3=C.accentD; ssk2.Color=C.accentD end
-                    end)
-                end
-            end)
-        end
-
-        sb.MouseButton1Click:Connect(executeForceJoin)
-        actionFunctions.TriggerForceJoin = executeForceJoin
-
-        stopB.MouseButton1Click:Connect(function()
-            spamming=false; stopB.Visible=false
-            sb.Text="FORCE JOIN"; sb.BackgroundColor3=C.deep; sb.TextColor3=C.accentD
-        end)
-    end
-
-    task.defer(function() logScroll.CanvasPosition=Vector2.new(0,math.huge) end)
-    return actionFunctions
-end
-
-clearBtn.MouseButton1Click:Connect(function()
-    for _,c in ipairs(logScroll:GetChildren()) do
-        if c:IsA("Frame") then c:Destroy() end
-    end
-    logOrder=0
-end)
-
--- ══════════════════════════════════════════════
--- WHITELIST PAGE
--- ══════════════════════════════════════════════
-local wlPage=Pages["Whitelist"]
-lbl(wlPage,"Target Filter",24,24,300,28,26,Enum.Font.GothamBold,C.tPrim)
-lbl(wlPage,"Restrict network acquisition to specific node targets",24,54,500,16,14,Enum.Font.Gotham,C.tMut)
-
-local wlTogCard=card(wlPage,24,90,CW,64)
-lbl(wlTogCard,"ENABLE FILTER",20,16,260,12,11,Enum.Font.GothamBold,C.tMut)
-lbl(wlTogCard,"When ON, system ignores unselected targets",20,34,360,16,13,Enum.Font.Gotham,C.tSec)
-mkToggle(wlTogCard,-66,19,cfg.whitelistEnabled,function(v) cfg.whitelistEnabled=v; saveConfig(); updateWLIndicator() end)
-
-local srchBG=Instance.new("Frame"); srchBG.Size=UDim2.new(0,CW,0,44); srchBG.Position=UDim2.new(0,24,0,164); srchBG.BackgroundColor3=C.deep; srchBG.BorderSizePixel=0; srchBG.Parent=wlPage
-Instance.new("UICorner",srchBG).CornerRadius=UDim.new(0,10); local srchSk=Instance.new("UIStroke"); srchSk.Color=C.stroke; srchSk.Parent=srchBG
-local srchBox=Instance.new("TextBox"); srchBox.Size=UDim2.new(1,-30,1,0); srchBox.Position=UDim2.new(0,16,0,0); srchBox.BackgroundTransparency=1; srchBox.TextColor3=C.tPrim; srchBox.PlaceholderText="Search database..."; srchBox.PlaceholderColor3=C.tMut; srchBox.TextSize=14; srchBox.Font=Enum.Font.GothamMedium; srchBox.TextXAlignment=Enum.TextXAlignment.Left; srchBox.ClearTextOnFocus=false; srchBox.Parent=srchBG
-srchBox.Focused:Connect(function() TweenService:Create(srchSk,TweenInfo.new(0.15),{Color=C.accentD}):Play() end)
-srchBox.FocusLost:Connect(function() TweenService:Create(srchSk,TweenInfo.new(0.15),{Color=C.stroke}):Play() end)
-
-local selCntLbl=lbl(wlPage,"0 locked",CW-180,218,80,16,13,Enum.Font.GothamBold,C.tMut,Enum.TextXAlignment.Right)
-local function updateSelCount() local n=#cfg.whitelist; selCntLbl.Text=n.." locked"; selCntLbl.TextColor3=n>0 and C.green or C.tMut; updateWLIndicator() end
-
-local clrSelBtn=Instance.new("TextButton"); clrSelBtn.Text="Clear All"; clrSelBtn.Size=UDim2.new(0,90,0,32); clrSelBtn.Position=UDim2.new(1,-114,0,210); clrSelBtn.BackgroundColor3=Color3.fromRGB(40,20,25); clrSelBtn.TextColor3=C.tSec; clrSelBtn.TextSize=13; clrSelBtn.Font=Enum.Font.GothamMedium; clrSelBtn.BorderSizePixel=0; clrSelBtn.Parent=wlPage
-Instance.new("UICorner",clrSelBtn).CornerRadius=UDim.new(0,8); Instance.new("UIStroke",clrSelBtn).Color=C.stroke
-
-local wlScroll=Instance.new("ScrollingFrame"); wlScroll.Size=UDim2.new(1,-48,1,-260); wlScroll.Position=UDim2.new(0,24,0,250); wlScroll.BackgroundColor3=C.bg; wlScroll.BorderSizePixel=0; wlScroll.ScrollBarThickness=0; wlScroll.CanvasSize=UDim2.new(0,0,0,0); wlScroll.AutomaticCanvasSize=Enum.AutomaticSize.Y; wlScroll.Parent=wlPage
-local wlGrid=Instance.new("Frame"); wlGrid.Size=UDim2.new(1,-16,0,0); wlGrid.Position=UDim2.new(0,8,0,8); wlGrid.BackgroundTransparency=1; wlGrid.AutomaticSize=Enum.AutomaticSize.Y; wlGrid.Parent=wlScroll
-local wlLayout=Instance.new("UIGridLayout"); wlLayout.CellSize=UDim2.new(0,175,0,40); wlLayout.CellPadding=UDim2.new(0,8,0,8); wlLayout.Parent=wlGrid
-
-local function isWL(name) for _,w in ipairs(cfg.whitelist) do if w==name then return true end end return false end
-local function toggleWL(name)
-    local found=false; for i,w in ipairs(cfg.whitelist) do if w==name then table.remove(cfg.whitelist,i); found=true; break end end
-    if not found then table.insert(cfg.whitelist,name) end; saveConfig(); updateSelCount()
-end
-
-local function refreshWL(filter)
-    filter=(filter or ""):lower(); for _,c in ipairs(wlGrid:GetChildren()) do if c:IsA("TextButton") then c:Destroy() end end
-    for _,name in ipairs(ALL_BRAINROTS) do
-        if filter=="" or name:lower():find(filter,1,true) then
-            local sel=isWL(name)
-            local b=Instance.new("TextButton"); b.Text=name; b.Size=UDim2.new(0,175,0,40)
-            b.BackgroundColor3=sel and C.accentD or C.card
-            b.TextColor3=sel and C.deep or C.tSec
-            b.TextSize=13; b.Font=Enum.Font.GothamMedium; b.BorderSizePixel=0; b.TextTruncate=Enum.TextTruncate.AtEnd; b.Parent=wlGrid
-            Instance.new("UICorner",b).CornerRadius=UDim.new(0,8); if not sel then Instance.new("UIStroke",b).Color=C.stroke end
-            b.MouseButton1Click:Connect(function()
-                toggleWL(name); local nowSel=isWL(name)
-                b.BackgroundColor3=nowSel and C.accentD or C.card; b.TextColor3=nowSel and C.deep or C.tSec
-                if nowSel then if b:FindFirstChild("UIStroke") then b.UIStroke:Destroy() end else Instance.new("UIStroke",b).Color=C.stroke end
-            end)
-        end
-    end
-end
-refreshWL(); updateSelCount()
-srchBox:GetPropertyChangedSignal("Text"):Connect(function() refreshWL(srchBox.Text) end)
-clrSelBtn.MouseButton1Click:Connect(function() cfg.whitelist={}; saveConfig(); updateSelCount(); refreshWL(srchBox.Text) end)
-
--- ══════════════════════════════════════════════
--- SETTINGS PAGE (SCROLLABLE MENU)
--- ══════════════════════════════════════════════
-local sett=Pages["Settings"]
-lbl(sett,"Settings",24,24,300,28,26,Enum.Font.GothamBold,C.tPrim)
-lbl(sett,"System configuration & thresholds",24,54,300,16,14,Enum.Font.Gotham,C.tMut)
-
-local settScroll = Instance.new("ScrollingFrame"); settScroll.Size = UDim2.new(1, -24, 1, -94); settScroll.Position = UDim2.new(0, 24, 0, 88); settScroll.BackgroundTransparency = 1; settScroll.BorderSizePixel = 0; settScroll.ScrollBarThickness = 0; settScroll.AutomaticCanvasSize = Enum.AutomaticSize.Y; settScroll.CanvasSize = UDim2.new(0, 0, 0, 0); settScroll.Parent = sett
-local settLL = Instance.new("UIListLayout"); settLL.Padding = UDim.new(0, 12); settLL.SortOrder = Enum.SortOrder.LayoutOrder; settLL.Parent = settScroll
-local logPadSett=Instance.new("UIPadding"); logPadSett.PaddingBottom=UDim.new(0,14); logPadSett.Parent=settScroll
-
-local function settCardScroll(h) 
-    local f = Instance.new("Frame"); f.Size = UDim2.new(0, CW, 0, h); f.BackgroundColor3 = C.card; f.BorderSizePixel = 0; f.Parent = settScroll
-    Instance.new("UICorner", f).CornerRadius = UDim.new(0, 12); Instance.new("UIStroke", f).Color = C.stroke; return f
-end
-
-local ac=settCardScroll(64)
-lbl(ac,"AUTO JOIN PROTOCOL",22,16,200,12,11,Enum.Font.GothamBold,C.tMut)
-lbl(ac,"Force teleportation upon valid target acquisition",22,34,380,16,13,Enum.Font.Gotham,C.tSec)
-mkToggle(ac,-66,19,cfg.autoJoin,function(v) cfg.autoJoin=v; saveConfig() end)
-
-local afjc=settCardScroll(64)
-lbl(afjc,"AUTO FORCE JOIN",22,16,200,12,11,Enum.Font.GothamBold,C.tMut)
-lbl(afjc,"Spam teleportation immediately upon node discovery",22,34,400,16,13,Enum.Font.Gotham,C.tSec)
-mkToggle(afjc,-66,19,cfg.autoForceJoin,function(v) cfg.autoForceJoin=v; saveConfig() end)
-
-local tc=settCardScroll(64)
-lbl(tc,"HUD NOTIFICATIONS",22,16,200,12,11,Enum.Font.GothamBold,C.tMut)
-lbl(tc,"Enable slide-in interface upon node discovery",22,34,380,16,13,Enum.Font.Gotham,C.tSec)
-mkToggle(tc,-66,19,cfg.toastEnabled,function(v) cfg.toastEnabled=v; saveConfig() end)
-
-local mc=settCardScroll(104)
-lbl(mc,"VALUE THRESHOLD",22,16,250,12,11,Enum.Font.GothamBold,C.tMut)
-local monRow=Instance.new("Frame"); monRow.Size=UDim2.new(1,-24,0,38); monRow.Position=UDim2.new(0,18,0,32); monRow.BackgroundTransparency=1; monRow.Parent=mc
-local mrl=Instance.new("UIListLayout"); mrl.FillDirection=Enum.FillDirection.Horizontal; mrl.Padding=UDim.new(0,10); mrl.VerticalAlignment=Enum.VerticalAlignment.Center; mrl.Parent=monRow
-
-local moneyBtns={}; local activeFilterLbl
-local function refreshMoney()
-    for i,b in ipairs(moneyBtns) do
-        local on=(i==cfg.minMoneyIndex)
-        b.BackgroundColor3=on and C.accentD or C.deep; b.TextColor3=on and C.deep or C.tSec
-        if on then if b:FindFirstChild("UIStroke") then b.UIStroke:Destroy() end else if not b:FindFirstChild("UIStroke") then Instance.new("UIStroke",b).Color=C.stroke end end
-    end
-    if activeFilterLbl then activeFilterLbl.Text="Active Threshold: "..moneyOptions[cfg.minMoneyIndex].label end; saveConfig()
-end
-for i,opt in ipairs(moneyOptions) do
-    local b=Instance.new("TextButton"); b.Text=opt.label; b.Size=UDim2.new(0,68,0,34); b.BackgroundColor3=C.deep; b.TextColor3=C.tSec; b.TextSize=13; b.Font=Enum.Font.GothamMedium; b.BorderSizePixel=0; b.Parent=monRow
-    Instance.new("UICorner",b).CornerRadius=UDim.new(0,8); table.insert(moneyBtns,b)
-    b.MouseButton1Click:Connect(function() cfg.minMoneyIndex=i; refreshMoney() end)
-end
-activeFilterLbl=lbl(mc,"Active Threshold: "..moneyOptions[cfg.minMoneyIndex].label,22,78,200,16,13,Enum.Font.GothamBold,C.accentD)
-refreshMoney()
-
-local smc=settCardScroll(64)
-lbl(smc,"SILENT START",22,16,200,12,11,Enum.Font.GothamBold,C.tMut)
-lbl(smc,"Launch GUI in minimized state automatically",22,34,380,16,13,Enum.Font.Gotham,C.tSec)
-mkToggle(smc,-66,19,cfg.startMinimized,function(v) cfg.startMinimized=v; saveConfig() end)
-
-local cec=settCardScroll(64)
-lbl(cec,"CLEAN ERROR GUIS",22,16,200,12,11,Enum.Font.GothamBold,C.tMut)
-lbl(cec,"Automatically destroy Roblox kick/crash popups",22,34,380,16,13,Enum.Font.Gotham,C.tSec)
-mkToggle(cec,-66,19,cfg.cleanErrorGUIs,function(v) cfg.cleanErrorGUIs=v; saveConfig() end)
-
-local instrCard = Instance.new("Frame"); instrCard.Size = UDim2.new(1, 0, 0, 46); instrCard.BackgroundTransparency = 1; instrCard.Parent = settScroll
-lbl(instrCard,"RightShift — Toggle User Interface Visibility",0,0,400,16,14,Enum.Font.Gotham,C.tMut)
-lbl(instrCard,"Config saves to "..SAVE_FILE.." in executor root",0,20,500,16,14,Enum.Font.Gotham,C.tMut)
-
--- ══════════════════════════════════════════════
--- CLEAN ERROR GUI LOOP
--- ══════════════════════════════════════════════
-task.spawn(function()
-    while true do
-        task.wait(1)
-        if cfg.cleanErrorGUIs then
-            pcall(function()
-                local promptGui = CoreGui:FindFirstChild("RobloxPromptGui")
-                if promptGui then local overlay = promptGui:FindFirstChild("promptOverlay"); if overlay then overlay:Destroy() end end
-                local networkGui = CoreGui:FindFirstChild("RobloxNetworkPauseNotification")
-                if networkGui then networkGui:Destroy() end
-            end)
-        end
-    end
-end)
-
--- ══════════════════════════════════════════════
--- WEBSOCKET
--- ══════════════════════════════════════════════
-local function connectWS()
-    setStatus("Connecting...", C.yellow); addLog("Initiating handshake to main server...", C.yellow, true)
-    local ok, ws = pcall(function() return WebSocket.connect(WS_URL) end)
-    if not ok or not ws then setStatus("Timeout", C.red); addLog("Handshake failed. Retrying in 5s...", C.red, true); task.delay(5, connectWS); return end
-
-    wsConnection = ws; setStatus("Connected", C.green); addLog("Connection secured.", C.green, true)
-
-    ws.OnMessage:Connect(function(raw)
-        local data = parseMsg(raw)
-        if not data then return end
-        setFmtLabel(data.wasB64)
-
-        local name, money, players, maxpl, jobId = data.name, data.money, data.players, data.maxpl, data.jobId
-        if not namePassesWhitelist(name) then return end
-        if seenJobIds[jobId] then return end
-        seenJobIds[jobId] = true
-
-        local monStr = fmtMoney(money)
-        local line   = string.format("%s  |  %d/%d  |  %s", name, players, maxpl, monStr)
-        local isNew  = money > peakMoney
-
-        if isNew then
-            peakMoney = money
-            if peakNameRef then peakNameRef.Text = name end
-            if peakMoneyRef then peakMoneyRef.Text = monStr end
-        end
-
-        bumpStat("seen")
-        if lastNameRef then lastNameRef.Text = name end
-        if lastMetaRef then lastMetaRef.Text = string.format("%d/%d players  ·  %s", players, maxpl, monStr) end
-
-        if money >= moneyOptions[cfg.minMoneyIndex].value then
-            local rowActions = addLog(line, isNew and C.gold or C.green, false, jobId)
-            showToast(name, money, isNew)
-            
-            -- 🛠️ LE AUTO FORCE JOIN ACTIVE VISUELLEMENT LE BOUTON SUR LE LOG !
-            if cfg.autoForceJoin then
-                bumpStat("joined")
-                if rowActions and rowActions.TriggerForceJoin then
-                    rowActions.TriggerForceJoin()
-                end
-            elseif cfg.autoJoin then
-                bumpStat("joined"); task.delay(0.5, function() pcall(function() TeleportService:TeleportToPlaceInstance(PLACE_ID, jobId, Players.LocalPlayer) end) end)
+      
+        if hrp then
+            local readyPart = getKickReadyPart()
+            if readyPart then
+                hrp.CFrame = readyPart.CFrame * CFrame.new(0, 3, 0)
             end
-        else
-            bumpStat("skipped"); addLog(line, C.tMut, true)
         end
-    end)
+        
+      
+        local args = { [1] = 1, [2] = 1 }
+        pcall(function() 
+            if kickEvent then
+                kickEvent:FireServer(unpack(args)) 
+            end
+        end)
+    end,
+})
 
-    ws.OnClose:Connect(function()
-        setStatus("Disconnected", C.red); addLog("Connection dropped. Reconnecting in 3s...", C.red, true)
-        wsConnection=nil; task.delay(3, connectWS)
-    end)
+FarmTab:CreateToggle({
+    Name = "Auto Collect (monney)",
+    CurrentValue = false,
+    Flag = "ToggleCollect",
+    Callback = function(Value)
+        _G.AutoCollect = Value
+        while _G.AutoCollect do
+            pcall(function() 
+                if kickCollectEvent then kickCollectEvent:FireServer() end
+                if bonusCollectEvent then 
+                  
+                    for i = 1, 100 do
+                        bonusCollectEvent:FireServer(i)
+                    end
+                end
+            end)
+            task.wait(0.5)
+        end
+    end,
+})
+
+FarmTab:CreateToggle({
+    Name = "AUTO TRAINING",
+    CurrentValue = false,
+    Flag = "ToggleStrength",
+    Callback = function(Value)
+        _G.AutoStrength = Value
+        while _G.AutoStrength do
+            pcall(function() strengthEvent:FireServer() end)
+            task.wait(0.1)
+        end
+    end,
+})
+
+FarmTab:CreateSection("upgrade")
+
+FarmTab:CreateToggle({
+    Name = "AUTO BUY SPEED",
+    CurrentValue = false,
+    Flag = "ToggleSpeed",
+    Callback = function(Value)
+        _G.AutoSpeed = Value
+        while _G.AutoSpeed do
+            pcall(function() speedUpgradeEvent:FireServer(1) end)
+            task.wait(0.5)
+        end
+    end,
+})
+
+FarmTab:CreateToggle({
+    Name = "Auto Rebirth",
+    CurrentValue = false,
+    Flag = "ToggleRebirth",
+    Callback = function(Value)
+        _G.AutoRebirth = Value
+        while _G.AutoRebirth do
+            pcall(function() rebirthEvent:FireServer() end)
+            task.wait(1)
+        end
+    end,
+})
+
+FarmTab:CreateToggle({
+    Name = "Auto Steal (Walk to Zone)",
+    CurrentValue = false,
+    Flag = "ToggleSteal",
+    Callback = function(Value)
+        _G.AutoSteal = Value
+        while _G.AutoSteal do
+            
+            pcall(function() transformEvent:FireServer() end)
+            
+            local char = LocalPlayer.Character
+            local hrp = char and char:FindFirstChild("HumanoidRootPart")
+            local hum = char and char:FindFirstChildOfClass("Humanoid")
+            
+            -
+            local readyPart = getKickReadyPart() 
+            
+            if hrp and hum and readyPart then
+
+                local lookAtPos = Vector3.new(readyPart.Position.X, hrp.Position.Y, readyPart.Position.Z)
+                hrp.CFrame = CFrame.lookAt(hrp.Position, lookAtPos)
+                
+                
+                hum:MoveTo(readyPart.Position)
+            end
+            
+            task.wait(0.1) 
+        end
+        
+        
+        if not _G.AutoSteal then
+            local char = LocalPlayer.Character
+            local hum = char and char:FindFirstChildOfClass("Humanoid")
+            local hrp = char and char:FindFirstChild("HumanoidRootPart")
+            if hum and hrp then
+                hum:MoveTo(hrp.Position)
+            end
+        end
+    end,
+})
+
+
+PlayerTab:CreateSection("Capacités de Combat")
+
+PlayerTab:CreateToggle({
+    Name = "BOOST (q keybind)",
+    CurrentValue = false,
+    Flag = "ToggleDodge",
+    Callback = function(Value)
+        _G.DodgeEnabled = Value
+    end,
+})
+
+local function PerformGroundDodge()
+    local char = LocalPlayer.Character
+    local hrp = char and char:FindFirstChild("HumanoidRootPart")
+    local humanoid = char and char:FindFirstChildOfClass("Humanoid")
+    
+
+    if humanoid and hrp and humanoid.MoveDirection.Magnitude > 0 then
+        local velocity = Instance.new("BodyVelocity")
+        velocity.MaxForce = Vector3.new(100000, 0, 100000) 
+        velocity.Velocity = humanoid.MoveDirection * 150
+        velocity.Parent = hrp
+        game:GetService("Debris"):AddItem(velocity, 0.18)
+    end
 end
 
-switchTab("Dashboard")
-if cfg.startMinimized then setMinimized(true) end
-connectWS()
+UserInputService.InputBegan:Connect(function(input, gameProcessed)
+    if not gameProcessed and _G.DodgeEnabled and input.KeyCode == Enum.KeyCode.Q then
+        PerformGroundDodge()
+    end
+end)
+
+
+PlayerTab:CreateSection("VISUAL")
+
+PlayerTab:CreateToggle({
+    Name = "ESP PLAYER",
+    CurrentValue = false,
+    Flag = "ToggleESP",
+    Callback = function(Value)
+        _G.ESP = Value
+        while _G.ESP do
+            for _, player in pairs(Players:GetPlayers()) do
+                if player ~= LocalPlayer and player.Character then
+                    if not player.Character:FindFirstChild("RayfieldESP") then
+                        local highlight = Instance.new("Highlight")
+                        highlight.Name = "RayfieldESP"
+                        highlight.FillColor = Color3.fromRGB(255, 0, 0)
+                        highlight.OutlineColor = Color3.fromRGB(255, 255, 255)
+                        highlight.FillTransparency = 0.5
+                        highlight.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+                        highlight.Parent = player.Character
+                    end
+                end
+            end
+            task.wait(1)
+        end
+        if not _G.ESP then
+            for _, player in pairs(Players:GetPlayers()) do
+                if player.Character and player.Character:FindFirstChild("RayfieldESP") then
+                    player.Character.RayfieldESP:Destroy()
+                end
+            end
+        end
+    end,
+})
+
+PlayerTab:CreateSection("MISC")
+
+local infJumpConnection
+PlayerTab:CreateToggle({
+    Name = "Infinity Jump ",
+    CurrentValue = false,
+    Flag = "ToggleInfJump",
+    Callback = function(Value)
+        _G.InfJump = Value
+        if _G.InfJump then
+            
+            infJumpConnection = UserInputService.JumpRequest:Connect(function()
+                local char = LocalPlayer.Character
+                local hum = char and char:FindFirstChildOfClass("Humanoid")
+                if hum then
+                    hum:ChangeState(Enum.HumanoidStateType.Jumping)
+                end
+            end)
+        else
+            if infJumpConnection then infJumpConnection:Disconnect() end
+        end
+    end,
+})
+
+local floatForce
+PlayerTab:CreateToggle({
+    Name = "Float ",
+    CurrentValue = false,
+    Flag = "ToggleFloat",
+    Callback = function(Value)
+        _G.Float = Value
+        local char = LocalPlayer.Character
+        local hrp = char and char:FindFirstChild("HumanoidRootPart")
+
+        if _G.Float and hrp then
+            floatForce = Instance.new("BodyVelocity")
+            floatForce.Name = "FloatVelocity"
+            -- Bloque uniquement la gravité (Axe Y) pour te faire flotter sans t'empêcher d'avancer
+            floatForce.MaxForce = Vector3.new(0, 100000, 0) 
+            floatForce.Velocity = Vector3.new(0, 0, 0)
+            floatForce.Parent = hrp
+        else
+            if hrp and hrp:FindFirstChild("FloatVelocity") then
+                hrp.FloatVelocity:Destroy()
+            end
+        end
+    end,
+})
+
+PlayerTab:CreateToggle({
+    Name = "Noclip ",
+    CurrentValue = false,
+    Flag = "ToggleNoclip",
+    Callback = function(Value)
+        _G.Noclip = Value
+        if _G.Noclip then
+            _G.NoclipConnection = RunService.Stepped:Connect(function()
+                local char = LocalPlayer.Character
+                if char then
+                    for _, part in pairs(char:GetDescendants()) do
+                        if part:IsA("BasePart") and part.CanCollide == true then
+                            part.CanCollide = false
+                        end
+                    end
+                end
+            end)
+        else
+            if _G.NoclipConnection then _G.NoclipConnection:Disconnect() end
+        end
+    end,
+})
+
+PlayerTab:CreateSection("EXTRA")
+
+PlayerTab:CreateToggle({
+    Name = "Fullbright ",
+    CurrentValue = false,
+    Flag = "ToggleFullbright",
+    Callback = function(Value)
+        if Value then
+            game.Lighting.Ambient = Color3.new(1, 1, 1)
+            game.Lighting.OutdoorAmbient = Color3.new(1, 1, 1)
+        else
+            game.Lighting.Ambient = Color3.fromRGB(128, 128, 128)
+            game.Lighting.OutdoorAmbient = Color3.fromRGB(128, 128, 128)
+        end
+    end,
+})
+
+
+-- ==========================================
+-- ONGLET 3 : TROLL & CHAOS
+-- ==========================================
+TrollTab:CreateSection("BULLY")
+
+local function GetClosestPlayer()
+    local closest = nil
+    local shortestDist = math.huge
+    local hrp = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+    if hrp then
+        for _, p in pairs(Players:GetPlayers()) do
+            if p ~= LocalPlayer and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
+                local dist = (p.Character.HumanoidRootPart.Position - hrp.Position).Magnitude
+                if dist < shortestDist then
+                    shortestDist = dist
+                    closest = p
+                end
+            end
+        end
+    end
+    return closest
+end
+
+TrollTab:CreateToggle({
+    Name = "Orbit",
+    CurrentValue = false,
+    Flag = "ToggleOrbit",
+    Callback = function(Value)
+        _G.Orbit = Value
+        while _G.Orbit do
+            local target = GetClosestPlayer()
+            local hrp = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+            if target and hrp then
+                local targetHrp = target.Character.HumanoidRootPart
+                hrp.CFrame = targetHrp.CFrame * CFrame.Angles(0, tick() * 10, 0) * CFrame.new(0, 0, 5)
+            end
+            task.wait()
+        end
+    end,
+})
+
+TrollTab:CreateToggle({
+    Name = "Blind ",
+    CurrentValue = false,
+    Flag = "ToggleBlind",
+    Callback = function(Value)
+        _G.Blind = Value
+        while _G.Blind do
+            local target = GetClosestPlayer()
+            local hrp = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+            if target and hrp then
+                hrp.CFrame = target.Character.HumanoidRootPart.CFrame * CFrame.new(0, 0.5, -1.5)
+            end
+            task.wait()
+        end
+    end,
+})
+
+TrollTab:CreateToggle({
+    Name = "Annoy )",
+    CurrentValue = false,
+    Flag = "ToggleAnnoy",
+    Callback = function(Value)
+        _G.Annoy = Value
+        while _G.Annoy do
+            local target = GetClosestPlayer()
+            local hrp = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+            if target and hrp then
+                hrp.CFrame = target.Character.HumanoidRootPart.CFrame * CFrame.new(0, 0, 3)
+            end
+            task.wait()
+        end
+    end,
+})
+
+TrollTab:CreateSection("GLOBAL")
+
+TrollTab:CreateToggle({
+    Name = "Fling All ",
+    CurrentValue = false,
+    Flag = "ToggleFling",
+    Callback = function(Value)
+        _G.FlingAll = Value
+        local char = LocalPlayer.Character
+        local hrp = char and char:FindFirstChild("HumanoidRootPart")
+        local hum = char and char:FindFirstChildOfClass("Humanoid")
+
+        if _G.FlingAll and hrp and hum then
+            hum.PlatformStand = true
+            local spinForce = Instance.new("BodyAngularVelocity")
+            spinForce.Name = "TrollSpin"
+            spinForce.MaxTorque = Vector3.new(math.huge, math.huge, math.huge)
+            spinForce.AngularVelocity = Vector3.new(0, 50000, 0)
+            spinForce.Parent = hrp
+
+            task.spawn(function()
+                while _G.FlingAll do
+                    for _, targetPlayer in pairs(Players:GetPlayers()) do
+                        if targetPlayer ~= LocalPlayer and _G.FlingAll then
+                            local targetChar = targetPlayer.Character
+                            local targetHrp = targetChar and targetChar:FindFirstChild("HumanoidRootPart")
+                            if targetHrp then
+                                local timer = tick()
+                                while _G.FlingAll and tick() - timer < 0.2 and targetHrp.Parent do
+                                    hrp.CFrame = targetHrp.CFrame
+                                    hrp.Velocity = Vector3.new(math.random(-5000, 5000), 5000, math.random(-5000, 5000))
+                                    task.wait(0.01)
+                                end
+                            end
+                        end
+                    end
+                    task.wait()
+                end
+                if hrp:FindFirstChild("TrollSpin") then hrp.TrollSpin:Destroy() end
+                hrp.Velocity = Vector3.new(0,0,0)
+                hum.PlatformStand = false 
+            end)
+        end
+    end,
+})
+
+TrollTab:CreateToggle({
+    Name = "Fake Lag ",
+    CurrentValue = false,
+    Flag = "ToggleLag",
+    Callback = function(Value)
+        _G.FakeLag = Value
+        while _G.FakeLag do
+            local hrp = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+            if hrp then
+                hrp.Anchored = true
+                task.wait(0.3)
+                hrp.Anchored = false
+                task.wait(0.5)
+            else
+                task.wait(0.1)
+            end
+        end
+        local hrp = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+        if hrp then hrp.Anchored = false end
+    end,
+})
+
+TrollTab:CreateToggle({
+    Name = "Chat Spammer",
+    CurrentValue = false,
+    Flag = "ToggleChat",
+    Callback = function(Value)
+        _G.ChatSpam = Value
+        local messages = {"EZ KICK A LUCKY BLOCK!", "SCRULI HUB ON TOP", "Imagine playing legit...", "You are too slow!"}
+        while _G.ChatSpam do
+            local msg = messages[math.random(1, #messages)]
+            pcall(function() game:GetService("TextChatService").TextChannels.RBXGeneral:SendAsync(msg) end)
+            pcall(function() game:GetService("ReplicatedStorage").DefaultChatSystemChatEvents.SayMessageRequest:FireServer(msg, "All") end)
+            task.wait(2.5)
+        end
+    end,
+})
+
+TrollTab:CreateSection("Troll")
+
+
+
+
+TrollTab:CreateButton({
+    Name = "Clone Illusion (put a fake body)",
+    Callback = function()
+        local char = LocalPlayer.Character
+        if char then
+            char.Archivable = true
+            local clone = char:Clone()
+            clone.Parent = Workspace
+            
+            -- Nettoie les scripts du clone pour ne pas bugger le jeu
+            for _, v in pairs(clone:GetDescendants()) do
+                if v:IsA("Script") or v:IsA("LocalScript") then
+                    v:Destroy()
+                end
+            end
+            
+            Rayfield:Notify({
+                Title = "Illusion",
+                Content = "Clone did!",
+                Duration = 3,
+                Image = 4483362458,
+            })
+        end
+    end,
+})
+
+Rayfield:Notify({
+    Title = "Succès",
+    Content = "scruli hub loaded!",
+    Duration = 5,
+    Image = 4483362458,
+})
+end
+
+
+local CorrectKey = "SCRULI67" 
+local DiscordLink = "https://discord.gg/bFJmhqcUXG" 
+
+local TweenService = game:GetService("TweenService")
+local Lighting = game:GetService("Lighting")
+local CoreGui = game:GetService("CoreGui")
+
+
+if CoreGui:FindFirstChild("CyberKeyUI_LO") then CoreGui.CyberKeyUI_LO:Destroy() end
+if Lighting:FindFirstChild("CyberBlur_LO") then Lighting.CyberBlur_LO:Destroy() end
+
+
+local BlurEffect = Instance.new("BlurEffect")
+BlurEffect.Name = "CyberBlur_LO"
+BlurEffect.Size = 0
+BlurEffect.Parent = Lighting
+TweenService:Create(BlurEffect, TweenInfo.new(1), {Size = 15}):Play()
+
+local UI = Instance.new("ScreenGui")
+UI.Name = "CyberKeyUI_LO"
+UI.Parent = CoreGui
+UI.ResetOnSpawn = false
+
+
+local MainFrame = Instance.new("Frame")
+MainFrame.Size = UDim2.new(0, 320, 0, 240)
+MainFrame.Position = UDim2.new(0.5, -160, 0.5, -120)
+MainFrame.BackgroundColor3 = Color3.fromRGB(10, 10, 12)
+MainFrame.Parent = UI
+Instance.new("UICorner", MainFrame).CornerRadius = UDim.new(0, 15)
+
+
+local Stroke = Instance.new("UIStroke", MainFrame)
+Stroke.Color = Color3.fromRGB(0, 160, 255)
+Stroke.Thickness = 2
+Stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+
+
+local Title = Instance.new("TextLabel")
+Title.Size = UDim2.new(1, 0, 0, 45)
+Title.BackgroundTransparency = 1
+Title.Text = "SCRULI HUB"
+Title.TextColor3 = Color3.fromRGB(255, 255, 255)
+Title.Font = Enum.Font.GothamBlack
+Title.TextSize = 22
+Title.Parent = MainFrame
+
+local Subtitle = Instance.new("TextLabel")
+Subtitle.Size = UDim2.new(1, 0, 0, 15)
+Subtitle.Position = UDim2.new(0, 0, 0, 38)
+Subtitle.BackgroundTransparency = 1
+Subtitle.Text = "AUTHENTICATION SYSTEM"
+Subtitle.TextColor3 = Color3.fromRGB(0, 160, 255)
+Subtitle.Font = Enum.Font.GothamBold
+Subtitle.TextSize = 9
+Subtitle.Parent = MainFrame
+
+
+local KeyInput = Instance.new("TextBox")
+KeyInput.Size = UDim2.new(0, 260, 0, 40)
+KeyInput.Position = UDim2.new(0.5, -130, 0, 75)
+KeyInput.BackgroundColor3 = Color3.fromRGB(18, 18, 22)
+KeyInput.TextColor3 = Color3.fromRGB(255, 255, 255)
+KeyInput.PlaceholderText = "••••••••••••"
+KeyInput.PlaceholderColor3 = Color3.fromRGB(60, 60, 70)
+KeyInput.Font = Enum.Font.GothamSemibold
+KeyInput.TextSize = 14
+KeyInput.Parent = MainFrame
+Instance.new("UICorner", KeyInput).CornerRadius = UDim.new(0, 8)
+local InputStroke = Instance.new("UIStroke", KeyInput)
+InputStroke.Color = Color3.fromRGB(30, 30, 35)
+
+
+local SubmitBtn = Instance.new("TextButton")
+SubmitBtn.Size = UDim2.new(0, 260, 0, 40)
+SubmitBtn.Position = UDim2.new(0.5, -130, 0, 130)
+SubmitBtn.BackgroundColor3 = Color3.fromRGB(0, 160, 255)
+SubmitBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+SubmitBtn.Text = "LOGIN"
+SubmitBtn.Font = Enum.Font.GothamBlack
+SubmitBtn.TextSize = 14
+SubmitBtn.AutoButtonColor = false
+SubmitBtn.Parent = MainFrame
+Instance.new("UICorner", SubmitBtn).CornerRadius = UDim.new(0, 8)
+
+
+local DiscordBtn = Instance.new("TextButton")
+DiscordBtn.Size = UDim2.new(0, 260, 0, 35)
+DiscordBtn.Position = UDim2.new(0.5, -130, 0, 180)
+DiscordBtn.BackgroundColor3 = Color3.fromRGB(25, 25, 28)
+DiscordBtn.TextColor3 = Color3.fromRGB(180, 180, 190)
+DiscordBtn.Text = "JOIN DISCORD FOR KEY"
+DiscordBtn.Font = Enum.Font.GothamBold
+DiscordBtn.TextSize = 12
+DiscordBtn.Parent = MainFrame
+Instance.new("UICorner", DiscordBtn).CornerRadius = UDim.new(0, 8)
+
+
+local function Animate(obj, prop, val)
+    TweenService:Create(obj, TweenInfo.new(0.3, Enum.EasingStyle.Quint), {[prop] = val}):Play()
+end
+
+SubmitBtn.MouseEnter:Connect(function() Animate(SubmitBtn, "BackgroundColor3", Color3.fromRGB(0, 190, 255)) end)
+SubmitBtn.MouseLeave:Connect(function() Animate(SubmitBtn, "BackgroundColor3", Color3.fromRGB(0, 160, 255)) end)
+
+DiscordBtn.MouseButton1Click:Connect(function()
+    pcall(function() setclipboard(DiscordLink) end)
+    DiscordBtn.Text = "LINK COPIED!"
+    Animate(DiscordBtn, "TextColor3", Color3.fromRGB(0, 160, 255))
+    task.wait(1.5)
+    DiscordBtn.Text = "JOIN DISCORD FOR KEY"
+    Animate(DiscordBtn, "TextColor3", Color3.fromRGB(180, 180, 190))
+end)
+
+SubmitBtn.MouseButton1Click:Connect(function()
+    if KeyInput.Text == CorrectKey then
+        Animate(SubmitBtn, "BackgroundColor3", Color3.fromRGB(0, 255, 120))
+        SubmitBtn.Text = "SUCCESS"
+        task.wait(0.5)
+        
+        -- Animation de sortie
+        Animate(BlurEffect, "Size", 0)
+        Animate(MainFrame, "BackgroundTransparency", 1)
+        Animate(Stroke, "Transparency", 1)
+        for _, v in pairs(MainFrame:GetChildren()) do
+            if v:IsA("TextLabel") or v:IsA("TextBox") or v:IsA("TextButton") then
+                Animate(v, "TextTransparency", 1)
+                if not v:IsA("TextLabel") then Animate(v, "BackgroundTransparency", 1) end
+            end
+        end
+        
+        task.wait(0.4)
+        UI:Destroy()
+        BlurEffect:Destroy()
+        LoadRayfield() 
+    else
+        SubmitBtn.Text = "INVALID KEY"
+        Animate(SubmitBtn, "BackgroundColor3", Color3.fromRGB(255, 50, 70))
+        task.wait(1)
+        SubmitBtn.Text = "LOGIN"
+        Animate(SubmitBtn, "BackgroundColor3", Color3.fromRGB(0, 160, 255))
+    end
+end)
