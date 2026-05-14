@@ -1,7 +1,6 @@
 -- ==========================================================
 -- SCRULI HUB BRO GIVE ME MY SOURCE BACK             
-
-
+--                                   
 -- ==========================================================
 
 local Players = game:GetService("Players")
@@ -176,7 +175,7 @@ FarmTab:CreateToggle({
             local hrp = char and char:FindFirstChild("HumanoidRootPart")
             local hum = char and char:FindFirstChildOfClass("Humanoid")
             
-            -
+            
             local readyPart = getKickReadyPart() 
             
             if hrp and hum and readyPart then
