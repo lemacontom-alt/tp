@@ -60,9 +60,7 @@ function LoadRayfield()
     local PlayerTab = Window:CreateTab("player/visual", 4483362458)
     local TrollTab = Window:CreateTab("Troll ", 4483362458)
 
--- ==========================================
---FARM
--- ==========================================
+
 FarmTab:CreateSection("FARM")
 
 
@@ -203,7 +201,7 @@ FarmTab:CreateToggle({
 })
 
 
-PlayerTab:CreateSection("Capacités de Combat")
+PlayerTab:CreateSection("extra")
 
 PlayerTab:CreateToggle({
     Name = "BOOST (q keybind)",
@@ -360,9 +358,7 @@ PlayerTab:CreateToggle({
 })
 
 
--- ==========================================
--- ONGLET 3 : TROLL & CHAOS
--- ==========================================
+
 TrollTab:CreateSection("BULLY")
 
 local function GetClosestPlayer()
@@ -679,7 +675,7 @@ SubmitBtn.MouseButton1Click:Connect(function()
         SubmitBtn.Text = "SUCCESS"
         task.wait(0.5)
         
-        -- Animation de sortie
+       
         Animate(BlurEffect, "Size", 0)
         Animate(MainFrame, "BackgroundTransparency", 1)
         Animate(Stroke, "Transparency", 1)
